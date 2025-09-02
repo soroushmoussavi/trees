@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "*.json": "jsonc",
-        "bitset": "c",
-        "unordered_map": "c",
-        "complex": "c",
-        "stdlib.h": "c"
-    }
-}

@@ -2,3 +2,5 @@
 trees
 *.exe
 *.out
+.vscode/
+.DS_Store
