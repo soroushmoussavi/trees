@@ -17,11 +17,8 @@
 #define ASSERTQ(args, cond, err) \
   if (!(cond)) { destroyval(args); return valerr(err); }
 
-struct Value;
-struct Env;
-typedef struct Value Value;
-typedef struct Env Env;
 
+typedef struct Env Env;
 typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_DEF, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
 typedef enum {SYM_Q,SYM_MATH} SYM_TYPE;
 
@@ -55,20 +52,22 @@ Value* readfloat(mpc_ast_t*);
 
 Value* eval(Value*);
 Value* evalexps(Value*);
-Value* take(Value*,int);
-Value* pop(Value*,int);
 Value* mathop(Value*,char*);
 Value* qop(Value*,char*);
 
 void mathlink(Value*, char*, Value*);
 void joinlink(Value*, Value*);
 
-void destroyval(Value*);
+Value* take(Value*,int);
+Value* pop(Value*,int);
+Value* copy(Value*);
 void addval(Value*,Value*); 
+void destroyval(Value*);
 
 Value* valint(int);
 Value* valfloat(double);
 Value* valsym(char*,SYM_TYPE);
+Value* valdef(standard);
 Value* valexps();
 Value* valexpq();
 Value* valerr(char*);

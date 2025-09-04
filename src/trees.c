@@ -349,12 +349,6 @@ Value* readfloat(mpc_ast_t* t){
   return (errno == ERANGE) ? valerr("Float Exceeding.") : valfloat(f);
 }
 
-void addval(Value* ans, Value* x){
-  ans->count++;
-  ans->cell = (Value**) realloc(ans->cell,ans->count * sizeof(Value*));
-  ans->cell[ans->count-1] = x;
-}
-
 Value* pop(Value* ans, int u){
 
   Value* removed = ans->cell[u];
@@ -373,19 +367,53 @@ Value* take(Value* ans, int u){
   return removed;
 }
 
+Value* copy(Value* ans){
+  Value* res = (Value*) malloc(sizeof(Value));
+  res->type = ans->type;
+
+  switch(res->type){
+    case VALUE_INT: res->i = ans->i; break;
+    case VALUE_FLOAT: res->f = ans->f; break;
+    case VALUE_SYM: 
+      res->sym = (char*) malloc(strlen(ans->sym)+1);
+      strcpy(res->sym,ans->sym);
+      break;
+    case VALUE_DEF: res->def = ans->def; break;
+    case VALUE_EXPS:
+    case VALUE_EXPQ:
+      res->count = ans->count;
+      res->cell = (Value**) malloc(sizeof(Value*)*res->count);
+      for(int i = 0; i < res->count; i++){
+        res->cell[i] = copy(ans->cell[i]);
+      }
+      break;
+    case VALUE_ERROR: 
+      res->err = (char*) malloc(strlen(ans->err)+1);
+      strcpy(res->err,ans->err);
+      break;
+  }
+
+}
+
+void addval(Value* ans, Value* x){
+  ans->count++;
+  ans->cell = (Value**) realloc(ans->cell,ans->count * sizeof(Value*));
+  ans->cell[ans->count-1] = x;
+}
+
 void destroyval(Value* ans){
   switch(ans->type){
     case VALUE_INT: break;
     case VALUE_FLOAT: break;
     case VALUE_SYM: free(ans->sym); break;
-    case VALUE_EXPQ:
-    case VALUE_EXPS: {
+    case VALUE_DEF: break;
+    case VALUE_EXPS:
+    case VALUE_EXPQ: 
       for(int i = 0; i<ans->count; i++){
         destroyval(ans->cell[i]);
       }
       free(ans->cell);
       break;
-    }
     case VALUE_ERROR: free(ans->err); break;
   }
   free(ans);
@@ -411,6 +439,13 @@ Value* valsym(char* s, SYM_TYPE st){
   ans->sym = malloc(strlen(s) + 1);
   ans->symtype = st;
   strcpy(ans->sym,s);
+  return ans;
+}
+
+Value* valdef(standard def){
+  Value* ans = (Value*) malloc(sizeof(Value));
+  ans->type = VALUE_DEF;
+  ans->def = def;
   return ans;
 }
 
@@ -452,6 +487,7 @@ void printval(Value* ans){
     case VALUE_INT: printf("%i",ans->i); break;
     case VALUE_FLOAT: printf("%f",ans->f); break;
     case VALUE_SYM: printf("%s",ans->sym); break;
+    case VALUE_DEF: printf("<def>"); break;
     case VALUE_EXPS: printexp(ans,'(',')'); break;
     case VALUE_EXPQ: printexp(ans,'{','}'); break;
     case VALUE_ERROR: printf("Error: %s",ans->err); break;
