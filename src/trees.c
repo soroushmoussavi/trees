@@ -419,6 +419,22 @@ void destroyval(Value* ans){
   free(ans);
 }
 
+Env* genenv(){
+  Env* e = (Env*) malloc(sizeof(Env));
+  e->count = 0;
+  e->syms = NULL;
+  e->vals = NULL;
+  return e;
+}
+
+void destroyenv(Env* e){
+  for(int i = 0; i < e->count; i++){
+    free(e->syms[i]);
+    destroyenv(e->vals[i]);
+  }
+  free(e->syms); free(e->vals); free(e);
+}
+
 Value* valint(int i){
   Value* ans = (Value*) malloc(sizeof(Value));
   ans->type = VALUE_INT;

@@ -17,12 +17,16 @@
 #define ASSERTQ(args, cond, err) \
   if (!(cond)) { destroyval(args); return valerr(err); }
 
-
-typedef struct Env Env;
 typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_DEF, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
 typedef enum {SYM_Q,SYM_MATH} SYM_TYPE;
 
 typedef Value* (*standard) (Env*,Value*); 
+
+typedef struct Env{
+    int count;
+    char** syms;
+    Value** vals;
+} Env;
 
 typedef struct Value{
     VAL_TYPE type;
@@ -63,6 +67,8 @@ Value* pop(Value*,int);
 Value* copy(Value*);
 void addval(Value*,Value*); 
 void destroyval(Value*);
+Env* genenv();
+void destroyenv(Env*);
 
 Value* valint(int);
 Value* valfloat(double);
