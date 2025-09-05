@@ -20,13 +20,12 @@
 typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_DEF, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
 typedef enum {SYM_Q,SYM_MATH} SYM_TYPE;
 
-typedef Value* (*standard) (Env*,Value*); 
+struct Value;
+struct Env;
+typedef struct Value Value;
+typedef struct Env Env;
 
-typedef struct Env{
-    int count;
-    char** syms;
-    Value** vals;
-} Env;
+typedef Value* (*standard) (Env*,Value*); 
 
 typedef struct Value{
     VAL_TYPE type;
@@ -46,9 +45,11 @@ typedef struct Value{
     };
 } Value;
 
-void printexp(Value*,char,char);
-void printval(Value*);
-void printlnval(Value*);
+typedef struct Env{
+    int count;
+    char** syms;
+    Value** vals;
+} Env;
 
 Value* read(mpc_ast_t*);
 Value* readint(mpc_ast_t*);
@@ -61,21 +62,5 @@ Value* qop(Value*,char*);
 
 void mathlink(Value*, char*, Value*);
 void joinlink(Value*, Value*);
-
-Value* take(Value*,int);
-Value* pop(Value*,int);
-Value* copy(Value*);
-void addval(Value*,Value*); 
-void destroyval(Value*);
-Env* genenv();
-void destroyenv(Env*);
-
-Value* valint(int);
-Value* valfloat(double);
-Value* valsym(char*,SYM_TYPE);
-Value* valdef(standard);
-Value* valexps();
-Value* valexpq();
-Value* valerr(char*);
 
 #endif

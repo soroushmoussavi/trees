@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall
 LDFLAGS = -ledit -lm
-SRC = src/trees.c src/mpc.c
+SRC = src/trees.c src/mpc.c src/utils.c
 OBJ = $(SRC:.c=.o)
 TARGET = trees
 
