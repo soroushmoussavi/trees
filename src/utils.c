@@ -81,11 +81,36 @@ Env* genenv(){
 void destroyenv(Env* e){
   for(int i = 0; i < e->count; i++){
     free(e->syms[i]);
-    destroyenv(e->vals[i]);
+    destroyval(e->vals[i]);
   }
   free(e->syms); free(e->vals); free(e);
 }
 
+Value* getenv(Env* e, Value* symval){
+    for(int i = 0; i < e->count; i++){
+        if(!strcmp(e->syms[i],symval->sym)) return copy(e->vals[i]);
+    }
+    return valerr("Undefined.");
+}
+
+void putenv(Env* e, Value* symval, Value* x){
+    
+    for(int i = 0; i < e->count; i++){
+        if(!strcmp(e->syms[i],symval->sym)){
+            destroyval(e->vals[i]);
+            e->vals[i] = copy(x);
+            return;
+        }
+    } 
+
+    e->count++;
+    e->syms = (char**) realloc(e->syms,sizeof(char*) * e->count);
+    e->vals = (Value**) realloc(e->vals,sizeof(Value*) * e->count);
+
+    e->syms[e->count-1] = malloc(strlen(symval->sym)+1);
+    strcpy(e->syms[e->count-1],symval->sym);
+    e->vals[e->count-1] = copy(x);
+}
 
 Value* valint(int i){
   Value* ans = (Value*) malloc(sizeof(Value));

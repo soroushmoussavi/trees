@@ -8,6 +8,8 @@ Value* take(Value*,int);
 Value* copy(Value*);
 void addval(Value*,Value*); 
 void destroyval(Value*);
+Value* getenv(Env*,Value*);
+void putenv(Env*,Value*,Value*);
 Env* genenv();
 void destroyenv(Env*);
 
