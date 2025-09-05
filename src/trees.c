@@ -1,12 +1,15 @@
 #include "trees.h"
 #include "utils.h"
 
+/*
+        symq : \"hea\" | \"ini\" | \"fin\" | \"tai\" | \"lis\" | \"joi\" | \"eva\" | \"con\" | \"len\" ; \
+        symmath : \"add\" | \"sub\" | \"mlt\" | \"div\" | \"mod\" | \"fdv\" | \"exp\" ;\
+*/
+
 int main(int argc, char** argv){
 
-  mpc_parser_t* Float = mpc_new("float");
   mpc_parser_t* Number = mpc_new("number");
-  mpc_parser_t* SymQ = mpc_new("symq");
-  mpc_parser_t* SymMath = mpc_new("symmath");
+  mpc_parser_t* Float = mpc_new("float");
   mpc_parser_t* Symbol = mpc_new("symbol");
   mpc_parser_t* ExpS = mpc_new("exps");
   mpc_parser_t* ExpQ = mpc_new("expq");
@@ -17,15 +20,16 @@ int main(int argc, char** argv){
       "\
         number : /-?[0-9]+/ ;\
         float : /(-?[0-9]+)(\\.[0-9]+)/ ; \
-        symq : \"hea\" | \"ini\" | \"fin\" | \"tai\" | \"lis\" | \"joi\" | \"eva\" | \"con\" | \"len\" ; \
-        symmath : \"add\" | \"sub\" | \"mlt\" | \"div\" | \"mod\" | \"fdv\" | \"exp\" ;\
-        symbol : <symq> | <symmath> ;\
+        symbol : /[a-z]+/ ;\
         exps : '(' <exp>* ')';\
         expq : '{' <exp>* '}';\
         exp : <float> | <number> | <symbol> | <exps> | <expq> ;\
         trees : /^/ <exp>* /$/ ;a\
       ",
-    Float, Number, SymQ, SymMath, Symbol, ExpS, ExpQ, Exp, Trees);
+    Number, Float, Symbol, ExpS, ExpQ, Exp, Trees);
+
+  Env* e = genenv();
+  initenv(e);
 
   puts("\nTREES 0.0.0.0.1");
   puts("Press Ctrl+C to Exit\n");
@@ -39,7 +43,7 @@ int main(int argc, char** argv){
 
       if(mpc_parse("<stdin>", input, Trees, &r)){
 
-        Value* ans = eval(read(r.output));
+        Value* ans = eval(e,read(r.output));
         printlnval(ans);
 
         destroyval(ans);
@@ -52,7 +56,8 @@ int main(int argc, char** argv){
       free(input);
   }
 
-  mpc_cleanup(9, Float, Number, SymQ, SymMath, Symbol, ExpS, ExpQ, Exp, Trees);
+  mpc_cleanup(7, Float, Number, Symbol, ExpS, ExpQ, Exp, Trees);
+  destroyenv(e);
 
   return 0;
 }
@@ -61,10 +66,7 @@ Value* read(mpc_ast_t* t){
 
   if(strstr(t->tag, "number")) return readint(t); 
   if(strstr(t->tag, "float")) return readfloat(t); 
-  if(strstr(t->tag, "symbol")){
-    if(strstr(t->tag, "symq")) return valsym(t->contents, SYM_Q);
-    if(strstr(t->tag, "symmath")) return valsym(t->contents, SYM_MATH);
-  }
+  if(strstr(t->tag, "symbol")) return valsym(t->contents);
    
   Value* ans = NULL;
   if(!strcmp(t->tag,">")) ans = valexps();
@@ -85,15 +87,20 @@ Value* read(mpc_ast_t* t){
   return ans;
 }
 
-Value* eval(Value* ans){
-  if(ans->type == VALUE_EXPS) return evalexps(ans);
+Value* eval(Env* e, Value* ans){
+  if(ans->type == VALUE_SYM){
+    Value* res = envget(e,ans);
+    destroyval(ans);
+    return res;
+  }
+  if(ans->type == VALUE_EXPS) return evalexps(e,ans);
   return ans;
 }
 
-Value* evalexps(Value* ans){
+Value* evalexps(Env* e, Value* ans){
 
   for(int i = 0; i < ans->count; i++){
-    ans->cell[i] = eval(ans->cell[i]);
+    ans->cell[i] = eval(e,ans->cell[i]);
   }
 
   for(int i = 0; i < ans->count; i++){
@@ -104,13 +111,13 @@ Value* evalexps(Value* ans){
   if(ans->count == 1) return take(ans,0);
 
   Value* first = pop(ans,0);
-  if(first->type != VALUE_SYM){
+  if(first->type != VALUE_DEF){
     destroyval(first);
     destroyval(ans);
     return valerr("Unbegun EXPS.");
   }
-
-  Value* res;
+  
+  /*
   switch(first->symtype){
     case SYM_Q: res = qop(ans,first->sym); break;
     case SYM_MATH: 
@@ -118,13 +125,13 @@ Value* evalexps(Value* ans){
       destroyval(ans);
       break;
   }
-
+  */
+  Value* res = first->def(e,ans);
   destroyval(first);
-
   return res;
 }
 
-Value* mathop(Value* ans, char* sym){
+Value* mathop(Env* e, Value* ans, char* sym){
 
   for(int i = 0; i < ans->count; i++){
     if(ans->cell[i]->type != VALUE_INT && ans->cell[i]->type != VALUE_FLOAT){
@@ -148,7 +155,7 @@ Value* mathop(Value* ans, char* sym){
   return x;
 }
 
-Value* qop(Value* ans, char* sym){
+Value* qop(Env* e, Value* ans, char* sym){
   
   if(!strcmp(sym,"hea")){
     ASSERTQ(ans, ans->count == 1, "One Argument Required 'hea'.");
@@ -201,7 +208,7 @@ Value* qop(Value* ans, char* sym){
     
     Value* res = take(ans,0);
     res->type = VALUE_EXPS;
-    return eval(res);
+    return eval(e,res);
   }
 
   if(!strcmp(sym,"joi")){
@@ -212,7 +219,7 @@ Value* qop(Value* ans, char* sym){
     return x;
   }
 
-  if(!strcmp(sym,"con")){
+  if(!strcmp(sym,"cnc")){
     ASSERTQ(ans,ans->count == 2, "Two Arguments Required 'con");
     ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "Incorrect Argument Type 'con'.");
     

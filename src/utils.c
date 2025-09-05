@@ -43,7 +43,7 @@ Value* copy(Value* ans){
       strcpy(res->err,ans->err);
       break;
   }
-
+  return res;
 }
 
 void addval(Value* ans, Value* x){
@@ -70,31 +70,63 @@ void destroyval(Value* ans){
   free(ans);
 }
 
-Env* genenv(){
-  Env* e = (Env*) malloc(sizeof(Env));
-  e->count = 0;
-  e->syms = NULL;
-  e->vals = NULL;
-  return e;
+void initenv(Env* e){
+
+    /* INITIALIZE MATH STANDARD */
+    adddefenv(e,"add",addst);
+    adddefenv(e,"sub",subst);
+    adddefenv(e,"mlt",mltst);
+    adddefenv(e,"div",divst);
+    adddefenv(e,"mod",modst);
+    adddefenv(e,"fdv",fdvst);
+    adddefenv(e,"exp",expst);
+    /* INITIALIZE Q STANDARD */
+    adddefenv(e,"hea",heast);
+    adddefenv(e,"ini",inist);
+    adddefenv(e,"fin",finst);
+    adddefenv(e,"tai",taist);
+    adddefenv(e,"lis",lisst);
+    adddefenv(e,"eva",evast);
+    adddefenv(e,"joi",joist);
+    adddefenv(e,"cnc",cncst);
+    adddefenv(e,"len",lenst);
 }
 
-void destroyenv(Env* e){
-  for(int i = 0; i < e->count; i++){
-    free(e->syms[i]);
-    destroyval(e->vals[i]);
-  }
-  free(e->syms); free(e->vals); free(e);
+Value* addst(Env* e, Value* ans){ return mathop(e,ans,"add"); }
+Value* subst(Env* e, Value* ans){ return mathop(e,ans,"sub"); }
+Value* mltst(Env* e, Value* ans){ return mathop(e,ans,"mlt"); }
+Value* divst(Env* e, Value* ans){ return mathop(e,ans,"div"); }
+Value* modst(Env* e, Value* ans){ return mathop(e,ans,"mod"); }
+Value* fdvst(Env* e, Value* ans){ return mathop(e,ans,"fdv"); }
+Value* expst(Env* e, Value* ans){ return mathop(e,ans,"exp"); }
+
+Value* heast(Env* e, Value* ans){ return qop(e,ans,"hea"); }
+Value* inist(Env* e, Value* ans){ return qop(e,ans,"ini"); }
+Value* finst(Env* e, Value* ans){ return qop(e,ans,"fin"); }
+Value* taist(Env* e, Value* ans){ return qop(e,ans,"tai"); }
+Value* lisst(Env* e, Value* ans){ return qop(e,ans,"lis"); }
+Value* evast(Env* e, Value* ans){ return qop(e,ans,"eva"); }
+Value* joist(Env* e, Value* ans){ return qop(e,ans,"joi"); }
+Value* cncst(Env* e, Value* ans){ return qop(e,ans,"cnc"); }
+Value* lenst(Env* e, Value* ans){ return qop(e,ans,"len"); }
+
+
+void adddefenv(Env* e, char* sym, definition def){
+    Value* symval = valsym(sym);
+    Value* defval = valdef(def);
+    envput(e,symval,defval);
+    destroyval(symval); destroyval(defval);
 }
 
-Value* getenv(Env* e, Value* symval){
+Value* envget(Env* e, Value* symval){
     for(int i = 0; i < e->count; i++){
         if(!strcmp(e->syms[i],symval->sym)) return copy(e->vals[i]);
     }
     return valerr("Undefined.");
 }
 
-void putenv(Env* e, Value* symval, Value* x){
-    
+void envput(Env* e, Value* symval, Value* x){
+
     for(int i = 0; i < e->count; i++){
         if(!strcmp(e->syms[i],symval->sym)){
             destroyval(e->vals[i]);
@@ -112,6 +144,22 @@ void putenv(Env* e, Value* symval, Value* x){
     e->vals[e->count-1] = copy(x);
 }
 
+Env* genenv(){
+  Env* e = (Env*) malloc(sizeof(Env));
+  e->count = 0;
+  e->syms = NULL;
+  e->vals = NULL;
+  return e;
+}
+
+void destroyenv(Env* e){
+  for(int i = 0; i < e->count; i++){
+    free(e->syms[i]);
+    destroyval(e->vals[i]);
+  }
+  free(e->syms); free(e->vals); free(e);
+}
+
 Value* valint(int i){
   Value* ans = (Value*) malloc(sizeof(Value));
   ans->type = VALUE_INT;
@@ -126,16 +174,15 @@ Value* valfloat(double f){
   return ans;
 }
 
-Value* valsym(char* s, SYM_TYPE st){
+Value* valsym(char* s){
   Value* ans = (Value*) malloc(sizeof(Value));
   ans->type = VALUE_SYM;
   ans->sym = malloc(strlen(s) + 1);
-  ans->symtype = st;
   strcpy(ans->sym,s);
   return ans;
 }
 
-Value* valdef(standard def){
+Value* valdef(definition def){
   Value* ans = (Value*) malloc(sizeof(Value));
   ans->type = VALUE_DEF;
   ans->def = def;
