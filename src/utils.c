@@ -72,6 +72,9 @@ void destroyval(Value* ans){
 
 void initenv(Env* e){
 
+    /* INITIALIZE DEF STANDARD */
+    adddefenv(e,"def",defst);
+
     /* INITIALIZE MATH STANDARD */
     adddefenv(e,"add",addst);
     adddefenv(e,"sub",subst);
@@ -90,6 +93,21 @@ void initenv(Env* e){
     adddefenv(e,"joi",joist);
     adddefenv(e,"cnc",cncst);
     adddefenv(e,"len",lenst);
+}
+
+Value* defst(Env* e, Value* ans){
+    ASSERTQ(ans,ans->cell[0]->type == VALUE_EXPQ,"Incorrect argument type 'def'.");
+    Value* symlist = pop(ans,0);
+    for(int i = 0; i < symlist->count; i++){
+        ASSERTQ(ans,symlist->cell[i]->type == VALUE_SYM,"Incorrect argument type 'def'.");
+    }
+    ASSERTQ(ans,symlist->count == ans->count, "Misaligned Definitions.");
+    for(int i = 0; i < symlist->count; i++){
+        envput(e,symlist->cell[i],ans->cell[i]);
+    }
+    destroyval(symlist);
+    destroyval(ans);
+    return valexpq();
 }
 
 Value* addst(Env* e, Value* ans){ return mathop(e,ans,"add"); }

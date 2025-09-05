@@ -16,6 +16,8 @@ void envput(Env*,Value*,Value*);
 Env* genenv();
 void destroyenv(Env*);
 
+Value* defst(Env*,Value*);
+
 Value* addst(Env*,Value*);
 Value* subst(Env*,Value*);
 Value* mltst(Env*,Value*);
