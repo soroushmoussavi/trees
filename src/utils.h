@@ -16,9 +16,9 @@ Value* copy(Value*);
 void addval(Value*,Value*); 
 void destroyval(Value*);
 
-void adddefenv(Env*,char*,definition);
+void addstdef(Env*,char*,definition);
 Value* envget(Env*,Value*);
-void envput(Env*,Value*,Value*);
+Value* envput(Env*,Value*,Value*,SYM_KIND);
 Env* genenv();
 void destroyenv(Env*);
 

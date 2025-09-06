@@ -70,10 +70,10 @@ void destroyval(Value* ans){
   free(ans);
 }
 
-void adddefenv(Env* e, char* sym, definition def){
+void addstdef(Env* e, char* sym, definition def){
     Value* symval = valsym(sym);
     Value* defval = valdef(def);
-    envput(e,symval,defval);
+    envput(e,symval,defval,DEFST);
     destroyval(symval); destroyval(defval);
 }
 
@@ -84,23 +84,29 @@ Value* envget(Env* e, Value* symval){
     return valerr("Undefined '%s'.",symval->sym);
 }
 
-void envput(Env* e, Value* symval, Value* x){
+Value* envput(Env* e, Value* symval, Value* x, SYM_KIND k){
 
     for(int i = 0; i < e->count; i++){
         if(!strcmp(e->syms[i],symval->sym)){
+            if(e->kinds[i] == DEFST || e->kinds[i] == VALST){
+              return valerr("Overriding the Standard.");
+            }
             destroyval(e->vals[i]);
             e->vals[i] = copy(x);
-            return;
+            return valexpq();
         }
     } 
 
     e->count++;
     e->syms = (char**) realloc(e->syms,sizeof(char*) * e->count);
     e->vals = (Value**) realloc(e->vals,sizeof(Value*) * e->count);
+    e->kinds = (SYM_KIND*) realloc(e->kinds,sizeof(SYM_KIND) * e->count);
 
     e->syms[e->count-1] = malloc(strlen(symval->sym)+1);
     strcpy(e->syms[e->count-1],symval->sym);
     e->vals[e->count-1] = copy(x);
+    e->kinds[e->count-1] = k;
+    return valexpq();
 }
 
 Env* genenv(){
@@ -108,6 +114,7 @@ Env* genenv(){
   e->count = 0;
   e->syms = NULL;
   e->vals = NULL;
+  e->kinds = NULL;
   return e;
 }
 
@@ -116,7 +123,7 @@ void destroyenv(Env* e){
     free(e->syms[i]);
     destroyval(e->vals[i]);
   }
-  free(e->syms); free(e->vals); free(e);
+  free(e->syms); free(e->vals); free(e->kinds); free(e);
 }
 
 Value* valint(int i){
@@ -226,27 +233,27 @@ char* printtype(VAL_TYPE t){
 
 void initenv(Env* e){
     /* INITIALIZE DEF STANDARD */
-    adddefenv(e,"def",defst);
+    addstdef(e,"def",defst);
 
     /* INITIALIZE MATH STANDARD */
-    adddefenv(e,"add",addst);
-    adddefenv(e,"sub",subst);
-    adddefenv(e,"mlt",mltst);
-    adddefenv(e,"div",divst);
-    adddefenv(e,"mod",modst);
-    adddefenv(e,"fdv",fdvst);
-    adddefenv(e,"exp",expst);
+    addstdef(e,"add",addst);
+    addstdef(e,"sub",subst);
+    addstdef(e,"mlt",mltst);
+    addstdef(e,"div",divst);
+    addstdef(e,"mod",modst);
+    addstdef(e,"fdv",fdvst);
+    addstdef(e,"exp",expst);
     /* INITIALIZE Q STANDARD */
-    adddefenv(e,"hea",heast);
-    adddefenv(e,"ini",inist);
-    adddefenv(e,"fin",finst);
-    adddefenv(e,"tai",taist);
-    adddefenv(e,"lis",lisst);
-    adddefenv(e,"eva",evast);
-    adddefenv(e,"joi",joist);
-    adddefenv(e,"prp",prpst);
-    adddefenv(e,"app",appst);    
-    adddefenv(e,"len",lenst);
+    addstdef(e,"hea",heast);
+    addstdef(e,"ini",inist);
+    addstdef(e,"fin",finst);
+    addstdef(e,"tai",taist);
+    addstdef(e,"lis",lisst);
+    addstdef(e,"eva",evast);
+    addstdef(e,"joi",joist);
+    addstdef(e,"prp",prpst);
+    addstdef(e,"app",appst);    
+    addstdef(e,"len",lenst);
 }
 
 Value* defst(Env* e, Value* ans){
@@ -257,12 +264,15 @@ Value* defst(Env* e, Value* ans){
       VALASSERT(ans,symlist->cell[i]->type == VALUE_SYM, "SYM Types Required within First Argument 'def'. Found %s.",printtype(symlist->cell[i]->type));
     }
     VALASSERT(ans,symlist->count == ans->count, "Misaligned Definitions. Given %i SYM. Given %i Values.",symlist->count, ans->count);
+    Value* empty = valexpq();
     for(int i = 0; i < symlist->count; i++){
-        envput(e,symlist->cell[i],ans->cell[i]);
+      destroyval(empty);
+      empty = envput(e,symlist->cell[i],ans->cell[i],VALNEW);
+      if(empty->type == VALUE_ERROR) break;
     }
     destroyval(symlist);
     destroyval(ans);
-    return valexpq();
+    return empty;
 }
 
 Value* addst(Env* e, Value* ans){

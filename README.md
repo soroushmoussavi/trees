@@ -21,5 +21,5 @@ Error: Division by Zero
 trees : 
 ```
 ## Status
-Complete with a parser combinator supplied with [mpc](https://github.com/orangeduck/mpc), a low-level evaluation engine, and a robust error-handling scheme, <i> trees </i> now supports one definition, seven arithmetic, and nine list-manipulation symbols. More coming soon ...
+Complete with a parser combinator supplied with [mpc](https://github.com/orangeduck/mpc), a low-level evaluation engine, and a robust error-handling scheme, <i> trees </i> now supports one definition, seven arithmetic, and ten list-manipulation symbols. More coming soon ...
  

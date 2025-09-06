@@ -15,6 +15,7 @@
 #endif
 
 typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_DEF, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
+typedef enum {VALST, VALNEW, DEFST, DEFNEW} SYM_KIND;
 
 typedef struct Value Value;
 typedef struct Env Env;
@@ -40,6 +41,7 @@ struct Env{
     int count;
     char** syms;
     Value** vals;
+    SYM_KIND* kinds;
 };
 
 Value* read(mpc_ast_t*);
