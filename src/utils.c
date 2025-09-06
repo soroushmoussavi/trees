@@ -172,6 +172,16 @@ Value* valerr(char* e){
   return ans;
 }
 
+void inttofloat(Value* ans){
+  ans->type = VALUE_FLOAT;
+  ans->f = ans->i;
+}
+
+void floattoint(Value* ans){
+  ans->type = VALUE_INT;
+  ans->i = ans->f;
+}
+
 void printexp(Value* ans, char open, char close){
   putchar(open);
   for(int i = 0; i < ans->count; i++){
@@ -236,37 +246,159 @@ Value* defst(Env* e, Value* ans){
 
 Value* addst(Env* e, Value* ans){
 
-    for(int i = 0; i < ans->count; i++){
-        VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
-    }
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
 
-    Value* x = pop(ans,0);
+  Value* x = pop(ans,0);
 
-    while(ans->count > 0){
-        Value* y = pop(ans,0);
-        if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT){
-            if(ans->type == VALUE_INT){
-                ans->type = VALUE_FLOAT;
-                ans->f = ans->i;
-            } 
-            if (x->type == VALUE_INT) ans->f += x->i;
-            else ans->f += x->f;
-        } else ans->i += x->i; 
-        
-        destroyval(y);
-    }
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
+      inttofloat(x);
+      if(y->type == VALUE_FLOAT) x->f += y->f;
+      else x->f += y->i;
+    } else x->i += y->i; 
+    destroyval(y);
+  }
 
-    return x;
+  return x;
+}
+
+Value* subst(Env* e, Value* ans){
+  
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+
+  Value* x = pop(ans,0);
+
+  if(ans->count == 0){
+    if(x->type == VALUE_FLOAT) x->f *= -1;
+    else x->i *= -1;
+  }
+
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
+      inttofloat(x);
+      if(y->type == VALUE_FLOAT) x->f -= y->f;
+      else x->f -= y->i;
+    } else x->i -= y->i; 
+    destroyval(y);
+  }
+
+  return x;
 }
 
 
+Value* mltst(Env* e, Value* ans){
+  
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
 
-Value* subst(Env* e, Value* ans){ return mathop(e,ans,"sub"); }
-Value* mltst(Env* e, Value* ans){ return mathop(e,ans,"mlt"); }
-Value* divst(Env* e, Value* ans){ return mathop(e,ans,"div"); }
-Value* modst(Env* e, Value* ans){ return mathop(e,ans,"mod"); }
-Value* fdvst(Env* e, Value* ans){ return mathop(e,ans,"fdv"); }
-Value* expst(Env* e, Value* ans){ return mathop(e,ans,"exp"); }
+  Value* x = pop(ans,0);
+
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
+      inttofloat(x);
+      if(y->type == VALUE_FLOAT) x->f *= y->f;
+      else x->f *= y->i;
+    } else x->i *= y->i; 
+    destroyval(y);
+  }
+
+  return x; 
+}
+
+Value* divst(Env* e, Value* ans){
+  
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+
+  Value* x = pop(ans,0);
+
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if((y->type == VALUE_FLOAT && y->f == 0) || (y->type == VALUE_INT && y->i == 0)){
+      destroyval(ans); destroyval(x); destroyval(y);
+      return valerr("Division by Zero.");
+    }
+    if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
+      inttofloat(x);
+      if(y->type == VALUE_FLOAT) x->f /= y->f;
+      else x->f /= y->i;
+    } else {
+      if(x->i % y->i == 0) x->i /= y->i; 
+      else{
+        inttofloat(x);
+        x->f = (float) x->i / y->i;
+      }
+    }
+    destroyval(y);
+  }
+
+  return x; 
+}
+
+Value* modst(Env* e, Value* ans){
+
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+
+  Value* x = pop(ans,0);
+
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
+      inttofloat(x);
+      if(y->type == VALUE_FLOAT) x->f = x->f - y->f * floor(x->f / y->f);
+      else x->f = x->f - y->i * floor(x->f / y->i);
+    } else x->i %= y->i; 
+    destroyval(y);
+  }
+
+  return x; 
+}
+
+Value* fdvst(Env* e, Value* ans){
+    
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+
+  Value* x = pop(ans,0);
+
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if((y->type == VALUE_FLOAT && y->f == 0) || (y->type == VALUE_INT && y->i == 0)){
+      destroyval(ans); destroyval(x); destroyval(y);
+      return valerr("Division by Zero.");
+    }
+    if(x->type == VALUE_FLOAT) {
+      x->type = VALUE_INT;
+      if(y->type == VALUE_FLOAT) x->i = (int) floor(x->f/y->f);
+      else x->i = (int) floor(x->f/y->i);
+    } else {
+      if(y->type == VALUE_FLOAT) x->i = (int) floor(x->i/y->f);
+      else x->i = (int) floor(x->i/y->i);
+    }
+    destroyval(y);
+  }
+
+  return x; 
+}
+
+Value* expst(Env* e, Value* ans){
+
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+
+  Value* x = pop(ans,0);
+
+  while(ans->count > 0){
+    Value* y = pop(ans,0);
+    if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
+      inttofloat(x);
+      if(y->type == VALUE_FLOAT) x->f = pow(x->f,y->f);
+      else x->f = pow(x->f,y->i);
+    } else x->i = (int) pow(x->i,y->i);
+    destroyval(y);
+  }
+
+  return x;
+}
 
 Value* heast(Env* e, Value* ans){ return qop(e,ans,"hea"); }
 Value* inist(Env* e, Value* ans){ return qop(e,ans,"ini"); }

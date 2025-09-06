@@ -52,10 +52,8 @@ Value* readfloat(mpc_ast_t*);
 
 Value* eval(Env*,Value*);
 Value* evalexps(Env*,Value*);
-Value* mathop(Env*, Value*,char*);
 Value* qop(Env*, Value*,char*);
 
-void mathlink(Value*, char*, Value*);
 void joinlink(Value*, Value*);
 
 #endif

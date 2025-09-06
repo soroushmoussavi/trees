@@ -122,30 +122,6 @@ Value* evalexps(Env* e, Value* ans){
   return res;
 }
 
-Value* mathop(Env* e, Value* ans, char* sym){
-
-  for(int i = 0; i < ans->count; i++){
-    if(ans->cell[i]->type != VALUE_INT && ans->cell[i]->type != VALUE_FLOAT){
-      return valerr("Non-numeric Inclusion.");
-    }
-  }
-
-  Value* x = pop(ans,0);
-
-  if(!strcmp(sym,"sub") && ans->count == 0){
-    if(x->type == VALUE_INT) x->i *= -1;
-    if(x->type == VALUE_FLOAT) x->f *= -1;
-  }
-
-  while(ans->count > 0){
-    Value* y = pop(ans,0);
-    mathlink(x,sym,y);
-    destroyval(y);
-  }
-
-  return x;
-}
-
 Value* qop(Env* e, Value* ans, char* sym){
   
   if(!strcmp(sym,"hea")){
@@ -233,102 +209,6 @@ Value* qop(Env* e, Value* ans, char* sym){
   return ans;
 }
 
-
-void mathlink(Value* ans, char* op, Value* x){
-
-  if(ans->type == VALUE_ERROR) return;
-  char hasfloat = ans->type == VALUE_FLOAT || x->type  == VALUE_FLOAT;
-
-  if(!strcmp(op,"add")){
-    if(hasfloat){
-      if(ans->type == VALUE_INT){
-        ans->type = VALUE_FLOAT;
-        ans->f = ans->i;
-      } 
-      if (x->type == VALUE_INT) ans->f += x->i;
-      else ans->f += x->f;
-    } else ans->i += x->i; 
-  } 
-
-  if(!strcmp(op,"sub")){
-    if(hasfloat){
-      if(ans->type == VALUE_INT){
-        ans->type = VALUE_FLOAT;
-        ans->f = ans->i;
-      } 
-      if (x->type == VALUE_INT) ans->f -= x->i;
-      else ans->f -= x->f;
-    } else ans->i -= x->i; 
-  } 
-
-  if(!strcmp(op,"mlt")){
-    if(hasfloat){
-      if(ans->type == VALUE_INT){
-        ans->type = VALUE_FLOAT;
-        ans->f = ans->i;
-      } 
-      if (x->type == VALUE_INT) ans->f *= x->i;
-      else ans->f *= x->f;
-    } else ans->i *= x->i; 
-  } 
-
-  if(!strcmp(op,"div")){
-    
-    if((x->type == VALUE_INT && x->i == 0) || (x->type == VALUE_FLOAT && x->f == 0)){
-      destroyval(ans);
-      ans = valerr("Division by Zero");
-    }
-
-    else if(hasfloat){
-      if(ans->type == VALUE_INT){
-        ans->type = VALUE_FLOAT;
-        ans->f = ans->i;
-      } 
-      if (x->type == VALUE_INT) ans->f /= x->i;
-      else ans->f /= x->f;
-    } 
-    else {
-      if(ans->i%x->i == 0) ans->i /= x->i;
-      else {
-        ans->type = VALUE_FLOAT;
-        ans->f = (float) ans->i / x->i;
-      }
-    } 
-  } 
-
-  if(!strcmp(op,"mod")){
-    if(hasfloat){
-      if(ans->type == VALUE_INT){
-        ans->type = VALUE_FLOAT;
-        ans->f = ans->i;
-      } 
-      if (x->type == VALUE_INT) ans->f = ans->f - x->i * floor(ans->f / x->i);
-      else ans->f = ans->f - x->f * floor(ans->f / x->f);
-    } else ans->i %= x->i;
-  } 
-
-  if(!strcmp(op,"fdv")){
-      if(ans->type == VALUE_FLOAT){
-        ans->type = VALUE_INT;
-        if(x->type == VALUE_INT) ans->i = (int) floor(ans->f/x->i);
-        else ans->i = (int) floor(ans->f/x->f);
-      } else {
-        if(x->type == VALUE_INT) ans->i = (int) floor(ans->i/x->i);
-        else ans->i = (int) floor(ans->i/x->f);
-      }
-  }
-
-  if(!strcmp(op,"exp")){
-    if(hasfloat){
-      if(ans->type == VALUE_INT){
-        ans->type = VALUE_FLOAT;
-        ans->f = ans->i;
-      } 
-      if (x->type == VALUE_INT) ans->f = pow(ans->f,x->i);
-      else ans->f = pow(ans->f,x->f);
-    } else ans->i = (int) pow(ans->i,x->i); 
-  } 
-}
 
 void joinlink(Value* ans, Value* x){
   while(x->count) addval(ans,pop(x,0));
