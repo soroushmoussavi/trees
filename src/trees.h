@@ -53,6 +53,4 @@ Value* readfloat(mpc_ast_t*);
 Value* eval(Env*,Value*);
 Value* evalexps(Env*,Value*);
 
-void joinlink(Value*, Value*);
-
 #endif
