@@ -70,65 +70,6 @@ void destroyval(Value* ans){
   free(ans);
 }
 
-void initenv(Env* e){
-
-    /* INITIALIZE DEF STANDARD */
-    adddefenv(e,"def",defst);
-
-    /* INITIALIZE MATH STANDARD */
-    adddefenv(e,"add",addst);
-    adddefenv(e,"sub",subst);
-    adddefenv(e,"mlt",mltst);
-    adddefenv(e,"div",divst);
-    adddefenv(e,"mod",modst);
-    adddefenv(e,"fdv",fdvst);
-    adddefenv(e,"exp",expst);
-    /* INITIALIZE Q STANDARD */
-    adddefenv(e,"hea",heast);
-    adddefenv(e,"ini",inist);
-    adddefenv(e,"fin",finst);
-    adddefenv(e,"tai",taist);
-    adddefenv(e,"lis",lisst);
-    adddefenv(e,"eva",evast);
-    adddefenv(e,"joi",joist);
-    adddefenv(e,"cnc",cncst);
-    adddefenv(e,"len",lenst);
-}
-
-Value* defst(Env* e, Value* ans){
-    ASSERTQ(ans,ans->cell[0]->type == VALUE_EXPQ,"Incorrect argument type 'def'.");
-    Value* symlist = pop(ans,0);
-    for(int i = 0; i < symlist->count; i++){
-        ASSERTQ(ans,symlist->cell[i]->type == VALUE_SYM,"Incorrect argument type 'def'.");
-    }
-    ASSERTQ(ans,symlist->count == ans->count, "Misaligned Definitions.");
-    for(int i = 0; i < symlist->count; i++){
-        envput(e,symlist->cell[i],ans->cell[i]);
-    }
-    destroyval(symlist);
-    destroyval(ans);
-    return valexpq();
-}
-
-Value* addst(Env* e, Value* ans){ return mathop(e,ans,"add"); }
-Value* subst(Env* e, Value* ans){ return mathop(e,ans,"sub"); }
-Value* mltst(Env* e, Value* ans){ return mathop(e,ans,"mlt"); }
-Value* divst(Env* e, Value* ans){ return mathop(e,ans,"div"); }
-Value* modst(Env* e, Value* ans){ return mathop(e,ans,"mod"); }
-Value* fdvst(Env* e, Value* ans){ return mathop(e,ans,"fdv"); }
-Value* expst(Env* e, Value* ans){ return mathop(e,ans,"exp"); }
-
-Value* heast(Env* e, Value* ans){ return qop(e,ans,"hea"); }
-Value* inist(Env* e, Value* ans){ return qop(e,ans,"ini"); }
-Value* finst(Env* e, Value* ans){ return qop(e,ans,"fin"); }
-Value* taist(Env* e, Value* ans){ return qop(e,ans,"tai"); }
-Value* lisst(Env* e, Value* ans){ return qop(e,ans,"lis"); }
-Value* evast(Env* e, Value* ans){ return qop(e,ans,"eva"); }
-Value* joist(Env* e, Value* ans){ return qop(e,ans,"joi"); }
-Value* cncst(Env* e, Value* ans){ return qop(e,ans,"cnc"); }
-Value* lenst(Env* e, Value* ans){ return qop(e,ans,"len"); }
-
-
 void adddefenv(Env* e, char* sym, definition def){
     Value* symval = valsym(sym);
     Value* defval = valdef(def);
@@ -253,4 +194,88 @@ void printval(Value* ans){
 }
 
 void printlnval(Value* ans) { printval(ans); putchar('\n'); }
+
+void initenv(Env* e){
+    /* INITIALIZE DEF STANDARD */
+    adddefenv(e,"def",defst);
+
+    /* INITIALIZE MATH STANDARD */
+    adddefenv(e,"add",addst);
+    adddefenv(e,"sub",subst);
+    adddefenv(e,"mlt",mltst);
+    adddefenv(e,"div",divst);
+    adddefenv(e,"mod",modst);
+    adddefenv(e,"fdv",fdvst);
+    adddefenv(e,"exp",expst);
+    /* INITIALIZE Q STANDARD */
+    adddefenv(e,"hea",heast);
+    adddefenv(e,"ini",inist);
+    adddefenv(e,"fin",finst);
+    adddefenv(e,"tai",taist);
+    adddefenv(e,"lis",lisst);
+    adddefenv(e,"eva",evast);
+    adddefenv(e,"joi",joist);
+    adddefenv(e,"cnc",cncst);
+    adddefenv(e,"len",lenst);
+}
+
+Value* defst(Env* e, Value* ans){
+    VALASSERT(ans,ans->cell[0]->type == VALUE_EXPQ,"Incorrect argument type 'def'.");
+    Value* symlist = pop(ans,0);
+    for(int i = 0; i < symlist->count; i++){
+        VALASSERT(ans,symlist->cell[i]->type == VALUE_SYM,"Incorrect argument type 'def'.");
+    }
+    VALASSERT(ans,symlist->count == ans->count, "Misaligned Definitions.");
+    for(int i = 0; i < symlist->count; i++){
+        envput(e,symlist->cell[i],ans->cell[i]);
+    }
+    destroyval(symlist);
+    destroyval(ans);
+    return valexpq();
+}
+
+Value* addst(Env* e, Value* ans){
+
+    for(int i = 0; i < ans->count; i++){
+        VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+    }
+
+    Value* x = pop(ans,0);
+
+    while(ans->count > 0){
+        Value* y = pop(ans,0);
+        if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT){
+            if(ans->type == VALUE_INT){
+                ans->type = VALUE_FLOAT;
+                ans->f = ans->i;
+            } 
+            if (x->type == VALUE_INT) ans->f += x->i;
+            else ans->f += x->f;
+        } else ans->i += x->i; 
+        
+        destroyval(y);
+    }
+
+    return x;
+}
+
+
+
+Value* subst(Env* e, Value* ans){ return mathop(e,ans,"sub"); }
+Value* mltst(Env* e, Value* ans){ return mathop(e,ans,"mlt"); }
+Value* divst(Env* e, Value* ans){ return mathop(e,ans,"div"); }
+Value* modst(Env* e, Value* ans){ return mathop(e,ans,"mod"); }
+Value* fdvst(Env* e, Value* ans){ return mathop(e,ans,"fdv"); }
+Value* expst(Env* e, Value* ans){ return mathop(e,ans,"exp"); }
+
+Value* heast(Env* e, Value* ans){ return qop(e,ans,"hea"); }
+Value* inist(Env* e, Value* ans){ return qop(e,ans,"ini"); }
+Value* finst(Env* e, Value* ans){ return qop(e,ans,"fin"); }
+Value* taist(Env* e, Value* ans){ return qop(e,ans,"tai"); }
+Value* lisst(Env* e, Value* ans){ return qop(e,ans,"lis"); }
+Value* evast(Env* e, Value* ans){ return qop(e,ans,"eva"); }
+Value* joist(Env* e, Value* ans){ return qop(e,ans,"joi"); }
+Value* cncst(Env* e, Value* ans){ return qop(e,ans,"cnc"); }
+Value* lenst(Env* e, Value* ans){ return qop(e,ans,"len"); }
+
 

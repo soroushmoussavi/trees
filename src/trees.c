@@ -117,15 +117,6 @@ Value* evalexps(Env* e, Value* ans){
     return valerr("Unbegun EXPS.");
   }
   
-  /*
-  switch(first->symtype){
-    case SYM_Q: res = qop(ans,first->sym); break;
-    case SYM_MATH: 
-      res = mathop(ans,first->sym); 
-      destroyval(ans);
-      break;
-  }
-  */
   Value* res = first->def(e,ans);
   destroyval(first);
   return res;
@@ -158,9 +149,9 @@ Value* mathop(Env* e, Value* ans, char* sym){
 Value* qop(Env* e, Value* ans, char* sym){
   
   if(!strcmp(sym,"hea")){
-    ASSERTQ(ans, ans->count == 1, "One Argument Required 'hea'.");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'hea'.");
-    ASSERTQ(ans, ans->cell[0]->count != 0, "Empty Argument 'hea'.");
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'hea'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'hea'.");
+    VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'hea'.");
 
     Value* res = take(ans,0);
     while(res->count > 1){destroyval(pop(res,1));}
@@ -168,9 +159,9 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
   if(!strcmp(sym,"ini")){
-    ASSERTQ(ans, ans->count == 1, "One Argument Required 'ini'.");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'ini'.");
-    ASSERTQ(ans, ans->cell[0]->count != 0, "Empty Argument 'ini'.");
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'ini'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'ini'.");
+    VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'ini'.");
 
     Value* res = take(ans,0);
     destroyval(pop(res,res->count-1));
@@ -178,9 +169,9 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
     if(!strcmp(sym,"fin")){
-    ASSERTQ(ans, ans->count == 1, "One Argument Required 'fin'.");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'fin'.");
-    ASSERTQ(ans, ans->cell[0]->count != 0, "Empty Argument 'fin'.");
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'fin'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'fin'.");
+    VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'fin'.");
 
     Value* res = take(ans,0);
     while(res->count > 1){destroyval(pop(res,0));}
@@ -188,9 +179,9 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
   if(!strcmp(sym,"tai")){
-    ASSERTQ(ans, ans->count == 1, "One Argument Required 'tai'.");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'tai'.");
-    ASSERTQ(ans, ans->cell[0]->count != 0, "Empty Argument 'tai'.");
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'tai'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'tai'.");
+    VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'tai'.");
 
     Value* res = take(ans,0);
     destroyval(pop(res,0));
@@ -203,8 +194,8 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
   if(!strcmp(sym,"eva")){
-    ASSERTQ(ans, ans->count == 1, "One Argument Required 'eva'.");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'eva'.");
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'eva'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'eva'.");
     
     Value* res = take(ans,0);
     res->type = VALUE_EXPS;
@@ -212,7 +203,7 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
   if(!strcmp(sym,"joi")){
-    for(int i = 0; i < ans->count; i++) ASSERTQ(ans,ans->cell[i]->type == VALUE_EXPQ, "Incorrect Argument Type 'joi'.");
+    for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_EXPQ, "Incorrect Argument Type 'joi'.");
     
     Value* x = pop(ans,0);
     while(ans->count) joinlink(x,pop(ans,0));
@@ -220,8 +211,8 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
   if(!strcmp(sym,"cnc")){
-    ASSERTQ(ans,ans->count == 2, "Two Arguments Required 'con");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "Incorrect Argument Type 'con'.");
+    VALASSERT(ans,ans->count == 2, "Two Arguments Required 'con");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "Incorrect Argument Type 'con'.");
     
     Value* x = valexpq();
     addval(x,pop(ans,1));
@@ -231,8 +222,8 @@ Value* qop(Env* e, Value* ans, char* sym){
   }
 
   if(!strcmp(sym,"len")){
-    ASSERTQ(ans, ans->count == 1, "One Argument Required 'len'.");
-    ASSERTQ(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'len'.");
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'len'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'len'.");
     
     int length = ans->cell[0]->count;
     destroyval(ans);
