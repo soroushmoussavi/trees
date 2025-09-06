@@ -1,11 +1,6 @@
 #include "trees.h"
 #include "utils.h"
 
-/*
-        symq : \"hea\" | \"ini\" | \"fin\" | \"tai\" | \"lis\" | \"joi\" | \"eva\" | \"con\" | \"len\" ; \
-        symmath : \"add\" | \"sub\" | \"mlt\" | \"div\" | \"mod\" | \"fdv\" | \"exp\" ;\
-*/
-
 int main(int argc, char** argv){
 
   mpc_parser_t* Number = mpc_new("number");

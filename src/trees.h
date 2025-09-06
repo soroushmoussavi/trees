@@ -14,10 +14,6 @@
 #include <editline/history.h>
 #endif
 
-#define VALASSERT(args, cond, err) \
-  if (!(cond)) { destroyval(args); return valerr(err); }
-
-
 typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_DEF, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
 
 typedef struct Value Value;

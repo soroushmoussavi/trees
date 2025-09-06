@@ -81,7 +81,7 @@ Value* envget(Env* e, Value* symval){
     for(int i = 0; i < e->count; i++){
         if(!strcmp(e->syms[i],symval->sym)) return copy(e->vals[i]);
     }
-    return valerr("Undefined.");
+    return valerr("Undefined '%s'.",symval->sym);
 }
 
 void envput(Env* e, Value* symval, Value* x){
@@ -164,11 +164,18 @@ Value* valexpq(){
   return ans;
 }
 
-Value* valerr(char* e){
+Value* valerr(char* e, ...){
   Value* ans = (Value*) malloc(sizeof(Value));
   ans->type = VALUE_ERROR;
-  ans->err = malloc(strlen(e) + 1);
-  strcpy(ans->err,e);
+
+  va_list va;
+  va_start(va,e);
+  ans->err = malloc(512);
+  vsnprintf(ans->err,511,e,va);
+
+  ans->err = realloc(ans->err,strlen(ans->err)+1);
+  va_end(va);
+
   return ans;
 }
 
@@ -196,7 +203,7 @@ void printval(Value* ans){
     case VALUE_INT: printf("%i",ans->i); break;
     case VALUE_FLOAT: printf("%f",ans->f); break;
     case VALUE_SYM: printf("%s",ans->sym); break;
-    case VALUE_DEF: printf("<def>"); break;
+    case VALUE_DEF: printf("DEF"); break;
     case VALUE_EXPS: printexp(ans,'(',')'); break;
     case VALUE_EXPQ: printexp(ans,'{','}'); break;
     case VALUE_ERROR: printf("Error: %s",ans->err); break;
@@ -204,6 +211,18 @@ void printval(Value* ans){
 }
 
 void printlnval(Value* ans) { printval(ans); putchar('\n'); }
+
+char* printtype(VAL_TYPE t){
+  switch(t){
+    case VALUE_INT: return "INT"; 
+    case VALUE_FLOAT: return "FLOAT";
+    case VALUE_SYM: return "SYM";
+    case VALUE_DEF: return "DEF";
+    case VALUE_EXPS: return "EXPS";
+    case VALUE_EXPQ: return "EXPQ";
+    case VALUE_ERROR: return "ERROR";
+  }
+}
 
 void initenv(Env* e){
     /* INITIALIZE DEF STANDARD */
@@ -225,17 +244,19 @@ void initenv(Env* e){
     adddefenv(e,"lis",lisst);
     adddefenv(e,"eva",evast);
     adddefenv(e,"joi",joist);
-    adddefenv(e,"cnc",cncst);
+    adddefenv(e,"prp",prpst);
+    adddefenv(e,"app",appst);    
     adddefenv(e,"len",lenst);
 }
 
 Value* defst(Env* e, Value* ans){
-    VALASSERT(ans,ans->cell[0]->type == VALUE_EXPQ,"Incorrect argument type 'def'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required as First Argument 'def'. Given %s.",printtype(ans->cell[0]->type));
+
     Value* symlist = pop(ans,0);
     for(int i = 0; i < symlist->count; i++){
-        VALASSERT(ans,symlist->cell[i]->type == VALUE_SYM,"Incorrect argument type 'def'.");
+      VALASSERT(ans,symlist->cell[i]->type == VALUE_SYM, "SYM Types Required within First Argument 'def'. Found %s.",printtype(symlist->cell[i]->type));
     }
-    VALASSERT(ans,symlist->count == ans->count, "Misaligned Definitions.");
+    VALASSERT(ans,symlist->count == ans->count, "Misaligned Definitions. Given %i SYM. Given %i Values.",symlist->count, ans->count);
     for(int i = 0; i < symlist->count; i++){
         envput(e,symlist->cell[i],ans->cell[i]);
     }
@@ -246,7 +267,7 @@ Value* defst(Env* e, Value* ans){
 
 Value* addst(Env* e, Value* ans){
 
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'add'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -265,7 +286,7 @@ Value* addst(Env* e, Value* ans){
 
 Value* subst(Env* e, Value* ans){
   
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'sub'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -290,7 +311,7 @@ Value* subst(Env* e, Value* ans){
 
 Value* mltst(Env* e, Value* ans){
   
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'mlt'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -309,7 +330,7 @@ Value* mltst(Env* e, Value* ans){
 
 Value* divst(Env* e, Value* ans){
   
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'div'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -327,7 +348,7 @@ Value* divst(Env* e, Value* ans){
       if(x->i % y->i == 0) x->i /= y->i; 
       else{
         inttofloat(x);
-        x->f = (float) x->i / y->i;
+        x->f = (double) x->f / y->i;
       }
     }
     destroyval(y);
@@ -338,7 +359,7 @@ Value* divst(Env* e, Value* ans){
 
 Value* modst(Env* e, Value* ans){
 
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'mod'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -357,7 +378,7 @@ Value* modst(Env* e, Value* ans){
 
 Value* fdvst(Env* e, Value* ans){
     
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'fdv'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -383,7 +404,7 @@ Value* fdvst(Env* e, Value* ans){
 
 Value* expst(Env* e, Value* ans){
 
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion.");
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'exp'. Found %s.",printtype(ans->cell[i]->type));
 
   Value* x = pop(ans,0);
 
@@ -401,8 +422,8 @@ Value* expst(Env* e, Value* ans){
 }
 
 Value* heast(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 1, "One Argument Required 'hea'.");
-  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'hea'.");
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'hea'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required 'hea'. Given %s.",printtype(ans->cell[0]->type));
   VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'hea'.");
 
   Value* res = take(ans,0);
@@ -411,8 +432,8 @@ Value* heast(Env* e, Value* ans){
 }
 
 Value* inist(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 1, "One Argument Required 'ini'.");
-  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'ini'.");
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'ini'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required 'ini'. Given %s.",printtype(ans->cell[0]->type));
   VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'ini'.");
 
   Value* res = take(ans,0);
@@ -421,8 +442,8 @@ Value* inist(Env* e, Value* ans){
 }
 
 Value* finst(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 1, "One Argument Required 'fin'.");
-  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'fin'.");
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'fin'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required 'fin'. Given %s.",printtype(ans->cell[0]->type));
   VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'fin'.");
 
   Value* res = take(ans,0);
@@ -431,8 +452,8 @@ Value* finst(Env* e, Value* ans){
 }
 
 Value* taist(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 1, "One Argument Required 'tai'.");
-  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'tai'.");
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'tai'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required 'tai'. Given %s.",printtype(ans->cell[0]->type));
   VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'tai'.");
 
   Value* res = take(ans,0);
@@ -446,8 +467,8 @@ Value* lisst(Env* e, Value* ans){
 }
 
 Value* evast(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 1, "One Argument Required 'eva'.");
-  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'eva'.");
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'eva'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required 'eva'. Given %s.",printtype(ans->cell[0]->type));
   
   Value* res = take(ans,0);
   res->type = VALUE_EXPS;
@@ -455,7 +476,7 @@ Value* evast(Env* e, Value* ans){
 }
 
 Value* joist(Env* e, Value* ans){
-  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_EXPQ, "Incorrect Argument Type 'joi'.");
+  for(int i = 0; i < ans->count; i++)  VALASSERT(ans, ans->cell[i]->type == VALUE_EXPQ, "EXPQ Types Required 'joi'. Found %s.",printtype(ans->cell[i]->type));
   
   Value* x = pop(ans,0);
   while(ans->count) {
@@ -466,25 +487,36 @@ Value* joist(Env* e, Value* ans){
   return x;
 }
 
-Value* cncst(Env* e, Value* ans){
-    VALASSERT(ans,ans->count == 2, "Two Arguments Required 'con");
-    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "Incorrect Argument Type 'con'.");
-    
-    Value* x = valexpq();
-    addval(x,pop(ans,1));
-    Value* y = take(ans,0);
-    while(y->count) addval(x,pop(y,0));
-    destroyval(y);
-    return x;
+Value* prpst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'prp'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "EXPQ and NON-ERROR Types Required 'prp'. Given %s and %s.",printtype(ans->cell[0]->type),printtype(ans->cell[1]->type));
+
+  Value* x = valexpq();
+  addval(x,pop(ans,1));
+  Value* y = take(ans,0);
+  while(y->count) addval(x,pop(y,0));
+  destroyval(y);
+  return x;
+}
+
+Value* appst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'app'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "EXPQ and NON-ERROR Types Required 'app'. Given %s and %s.",printtype(ans->cell[0]->type),printtype(ans->cell[1]->type));
+
+  Value* y = pop(ans,1);
+  Value* x = take(ans,0);
+  addval(x,y);
+  return x;
 }
 
 Value* lenst(Env* e, Value* ans){
-    VALASSERT(ans, ans->count == 1, "One Argument Required 'len'.");
-    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'len'.");
-    
-    int length = ans->cell[0]->count;
-    destroyval(ans);
-    return valint(length);
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'len'. Given %i.", ans->count, 1);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required 'len'. Given %s.",printtype(ans->cell[0]->type));
+  
+  int length = ans->cell[0]->count;
+  destroyval(ans);
+  return valint(length);
 }
+
 
 

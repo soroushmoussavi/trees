@@ -3,18 +3,31 @@
 
 #include "trees.h"
 
+#define VALASSERT(args, cond, err, ...) \
+  if (!(cond)) { \
+    Value* errorval = valerr(err,##__VA_ARGS__);\
+    destroyval(args); \
+    return errorval; \
+    }
+
 Value* pop(Value*,int);
 Value* take(Value*,int);
 Value* copy(Value*);
 void addval(Value*,Value*); 
 void destroyval(Value*);
 
-void initenv(Env*);
 void adddefenv(Env*,char*,definition);
 Value* envget(Env*,Value*);
 void envput(Env*,Value*,Value*);
 Env* genenv();
 void destroyenv(Env*);
+
+void printexp(Value*,char,char);
+void printval(Value*);
+void printlnval(Value*);
+char* printtype(VAL_TYPE);
+
+void initenv(Env*);
 
 Value* defst(Env*,Value*);
 
@@ -33,7 +46,8 @@ Value* taist(Env*,Value*);
 Value* lisst(Env*,Value*);
 Value* evast(Env*,Value*);
 Value* joist(Env*,Value*);
-Value* cncst(Env*,Value*);
+Value* prpst(Env*,Value*);
+Value* appst(Env*,Value*);
 Value* lenst(Env*,Value*);
 
 Value* valint(int);
@@ -42,10 +56,6 @@ Value* valsym(char*);
 Value* valdef(definition);
 Value* valexps();
 Value* valexpq();
-Value* valerr(char*);
-
-void printexp(Value*,char,char);
-void printval(Value*);
-void printlnval(Value*);
+Value* valerr(char*, ...);
 
 #endif
