@@ -400,14 +400,91 @@ Value* expst(Env* e, Value* ans){
   return x;
 }
 
-Value* heast(Env* e, Value* ans){ return qop(e,ans,"hea"); }
-Value* inist(Env* e, Value* ans){ return qop(e,ans,"ini"); }
-Value* finst(Env* e, Value* ans){ return qop(e,ans,"fin"); }
-Value* taist(Env* e, Value* ans){ return qop(e,ans,"tai"); }
-Value* lisst(Env* e, Value* ans){ return qop(e,ans,"lis"); }
-Value* evast(Env* e, Value* ans){ return qop(e,ans,"eva"); }
-Value* joist(Env* e, Value* ans){ return qop(e,ans,"joi"); }
-Value* cncst(Env* e, Value* ans){ return qop(e,ans,"cnc"); }
-Value* lenst(Env* e, Value* ans){ return qop(e,ans,"len"); }
+Value* heast(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'hea'.");
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'hea'.");
+  VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'hea'.");
+
+  Value* res = take(ans,0);
+  while(res->count > 1){destroyval(pop(res,1));}
+  return res;
+}
+
+Value* inist(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'ini'.");
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'ini'.");
+  VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'ini'.");
+
+  Value* res = take(ans,0);
+  destroyval(pop(res,res->count-1));
+  return res;
+}
+
+Value* finst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'fin'.");
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'fin'.");
+  VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'fin'.");
+
+  Value* res = take(ans,0);
+  while(res->count > 1){destroyval(pop(res,0));}
+  return res;
+}
+
+Value* taist(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'tai'.");
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'tai'.");
+  VALASSERT(ans, ans->cell[0]->count != 0, "Empty Argument 'tai'.");
+
+  Value* res = take(ans,0);
+  destroyval(pop(res,0));
+  return res;
+}
+
+Value* lisst(Env* e, Value* ans){     
+  ans->type = VALUE_EXPQ;
+  return ans; 
+}
+
+Value* evast(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'eva'.");
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'eva'.");
+  
+  Value* res = take(ans,0);
+  res->type = VALUE_EXPS;
+  return eval(e,res);
+}
+
+Value* joist(Env* e, Value* ans){
+  for(int i = 0; i < ans->count; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_EXPQ, "Incorrect Argument Type 'joi'.");
+  
+  Value* x = pop(ans,0);
+  while(ans->count) {
+    Value* y = pop(ans,0);
+    while(y->count) addval(x,pop(y,0));
+    destroyval(y);
+  }
+  return x;
+}
+
+Value* cncst(Env* e, Value* ans){
+    VALASSERT(ans,ans->count == 2, "Two Arguments Required 'con");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type != VALUE_ERROR, "Incorrect Argument Type 'con'.");
+    
+    Value* x = valexpq();
+    addval(x,pop(ans,1));
+    Value* y = take(ans,0);
+    while(y->count) addval(x,pop(y,0));
+    destroyval(y);
+    return x;
+}
+
+Value* lenst(Env* e, Value* ans){
+    VALASSERT(ans, ans->count == 1, "One Argument Required 'len'.");
+    VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "Incorrect Argument Type 'len'.");
+    
+    int length = ans->cell[0]->count;
+    destroyval(ans);
+    return valint(length);
+}
 
 
