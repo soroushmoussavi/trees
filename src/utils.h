@@ -16,7 +16,7 @@ Value* copy(Value*);
 void addval(Value*,Value*); 
 void destroyval(Value*);
 
-void addstdef(Env*,char*,definition);
+void addstdef(Env*,char*,transform);
 Value* envget(Env*,Value*);
 Value* envput(Env*,Value*,Value*,SYM_KIND);
 Env* genenv();
@@ -26,6 +26,7 @@ void printexp(Value*,char,char);
 void printval(Value*);
 void printlnval(Value*);
 char* printtype(VAL_TYPE);
+char* printproname(char*);
 
 void initenv(Env*);
 
@@ -53,7 +54,7 @@ Value* lenst(Env*,Value*);
 Value* valint(int);
 Value* valfloat(double);
 Value* valsym(char*);
-Value* valdef(definition);
+Value* valpro(transform,char*);
 Value* valexps();
 Value* valexpq();
 Value* valerr(char*, ...);

@@ -4,3 +4,4 @@ trees
 *.out
 .vscode/
 .DS_Store
+next.txt

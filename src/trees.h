@@ -14,13 +14,13 @@
 #include <editline/history.h>
 #endif
 
-typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_DEF, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
-typedef enum {VALST, VALNEW, DEFST, DEFNEW} SYM_KIND;
+typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_PRO, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
+typedef enum {VALST, VALNV, DEFST, DEFNV} SYM_KIND;
 
 typedef struct Value Value;
 typedef struct Env Env;
 
-typedef Value* (*definition) (Env*,Value*); 
+typedef Value* (*transform) (Env*,Value*); 
 
 struct Value{
     VAL_TYPE type;
@@ -28,7 +28,10 @@ struct Value{
         int i;
         double f;
         char* sym;
-        definition def;
+        struct{
+            transform pro;
+            char* proname;
+        };
         struct {
             int count;
             struct Value** cell;

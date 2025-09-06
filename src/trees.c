@@ -106,13 +106,13 @@ Value* evalexps(Env* e, Value* ans){
   if(ans->count == 1) return take(ans,0);
 
   Value* first = pop(ans,0);
-  if(first->type != VALUE_DEF){
+  if(first->type != VALUE_PRO){
     destroyval(first);
     destroyval(ans);
     return valerr("Unbegun EXPS.");
   }
   
-  Value* res = first->def(e,ans);
+  Value* res = first->pro(e,ans);
   destroyval(first);
   return res;
 }
