@@ -107,7 +107,6 @@ Value* evalexps(Env* e, Value* ans){
 
   Value* first = pop(ans,0);
   if(first->type != VALUE_FUNCTION){
-    printf("type recorded: %s\n",printtype(first->type));
     destroyval(first);
     destroyval(ans);
     return valerr("Unbegun EXPS.");
