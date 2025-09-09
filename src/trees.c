@@ -106,13 +106,15 @@ Value* evalexps(Env* e, Value* ans){
   if(ans->count == 1) return take(ans,0);
 
   Value* first = pop(ans,0);
-  if(first->type != VALUE_PRO){
+  if(first->type != VALUE_FUNCTION){
+    printf("type recorded: %s\n",printtype(first->type));
     destroyval(first);
     destroyval(ans);
     return valerr("Unbegun EXPS.");
   }
   
-  Value* res = first->pro(e,ans);
+  Value* res = call(e,first,ans);
+  
   destroyval(first);
   return res;
 }

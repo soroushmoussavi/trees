@@ -14,8 +14,8 @@
 #include <editline/history.h>
 #endif
 
-typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_PRO, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
-typedef enum {VALST, VALNV, DEFST, DEFNV} SYM_KIND;
+typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_FUNCTION, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
+typedef enum {ST, NV} SYM_KIND;
 
 typedef struct Value Value;
 typedef struct Env Env;
@@ -31,6 +31,9 @@ struct Value{
         struct{
             transform pro;
             char* proname;
+            Env* env;
+            Value* args;
+            Value* body;
         };
         struct {
             int count;
@@ -41,6 +44,7 @@ struct Value{
 };
 
 struct Env{
+    Env* parent;
     int count;
     char** syms;
     Value** vals;

@@ -19,6 +19,8 @@ void destroyval(Value*);
 void addstdef(Env*,char*,transform);
 Value* envget(Env*,Value*);
 Value* envput(Env*,Value*,Value*,SYM_KIND);
+Value* envdef(Env*,Value*,Value*,SYM_KIND);
+Env* envcopy(Env*);
 Env* genenv();
 void destroyenv(Env*);
 
@@ -29,8 +31,13 @@ char* printtype(VAL_TYPE);
 char* printproname(char*);
 
 void initenv(Env*);
+Value* call(Env*,Value*,Value*);
 
+Value* onest(Env*,Value*);
+Value* twost(Env*,Value*);
 Value* defst(Env*,Value*);
+
+Value* var(Env*,Value*,char*);
 
 Value* addst(Env*,Value*);
 Value* subst(Env*,Value*);

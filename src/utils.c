@@ -1,7 +1,6 @@
 #include "utils.h"
 
 Value* pop(Value* ans, int u){
-
   Value* removed = ans->cell[u];
 
   memmove(&ans->cell[u],&ans->cell[u+1],sizeof(Value*)*(ans->count-u-1));
@@ -29,10 +28,18 @@ Value* copy(Value* ans){
       res->sym = (char*) malloc(strlen(ans->sym)+1);
       strcpy(res->sym,ans->sym);
       break;
-    case VALUE_PRO: 
-      res->pro = ans->pro; 
-      res->proname = (char*) malloc(strlen(ans->proname)+1);
-      strcpy(res->proname,ans->proname);
+    case VALUE_FUNCTION:
+      if (!ans->pro){
+        res->pro = NULL;
+        res->proname = NULL;
+        res->env = envcopy(ans->env);
+        res->args = copy(ans->args);
+        res->body = copy(ans->body);
+      } else {
+        res->pro = ans->pro; 
+        res->proname = (char*) malloc(strlen(ans->proname)+1);
+        strcpy(res->proname,ans->proname);
+      }
       break;
     case VALUE_EXPS:
     case VALUE_EXPQ:
@@ -61,7 +68,13 @@ void destroyval(Value* ans){
     case VALUE_INT: break;
     case VALUE_FLOAT: break;
     case VALUE_SYM: free(ans->sym); break;
-    case VALUE_PRO: free(ans->proname); break;
+    case VALUE_FUNCTION: 
+      if(!ans->pro){
+        destroyenv(ans->env);
+        destroyval(ans->args);
+        destroyval(ans->body);
+      } else free(ans->proname); 
+      break;
     case VALUE_EXPS:
     case VALUE_EXPQ: 
       for(int i = 0; i<ans->count; i++){
@@ -77,7 +90,7 @@ void destroyval(Value* ans){
 void addstdef(Env* e, char* sym, transform pro){
     Value* symval = valsym(sym);
     Value* proval = valpro(pro,printproname(sym));
-    envput(e,symval,proval,DEFST);
+    envdef(e,symval,proval,ST);
     destroyval(symval); destroyval(proval);
 }
 
@@ -85,14 +98,15 @@ Value* envget(Env* e, Value* symval){
     for(int i = 0; i < e->count; i++){
         if(!strcmp(e->syms[i],symval->sym)) return copy(e->vals[i]);
     }
-    return valerr("Undefined '%s'.",symval->sym);
+    if(e->parent){
+      return envget(e->parent,symval);
+    } else return valerr("Undefined '%s'.",symval->sym);
 }
 
 Value* envput(Env* e, Value* symval, Value* x, SYM_KIND k){
-
     for(int i = 0; i < e->count; i++){
         if(!strcmp(e->syms[i],symval->sym)){
-            if(e->kinds[i] == DEFST || e->kinds[i] == VALST) return valerr("Overriding the Standard.");
+            if(e->kinds[i] == ST) return valerr("Overriding the Standard.");
             destroyval(e->vals[i]);
             e->vals[i] = copy(x);
             return valexpq();
@@ -111,9 +125,32 @@ Value* envput(Env* e, Value* symval, Value* x, SYM_KIND k){
     return valexpq();
 }
 
+Value* envdef(Env* e, Value* symval, Value* x, SYM_KIND k){
+  while (e->parent) e = e->parent;
+  return envput(e,symval,x,k);
+}
+
+Env* envcopy(Env* e){
+  Env* new = genenv();
+  new->parent = e->parent;
+  new->count = e->count;
+  new->syms = (char**) malloc(sizeof(char*) * new->count);
+  new->vals = (Value**) malloc(sizeof(Value*) * new->count);
+
+  for(int i = 0; i < new->count; i++){
+    new->syms[i] = malloc(strlen(e->syms[i])+1);
+    strcpy(new->syms[i],e->syms[i]);
+    new->vals[i] = copy(e->vals[i]);
+    new->kinds[i] = e->kinds[i];
+  }
+
+  return new;
+}
+
 Env* genenv(){
   Env* e = (Env*) malloc(sizeof(Env));
   e->count = 0;
+  e->parent = NULL;
   e->syms = NULL;
   e->vals = NULL;
   e->kinds = NULL;
@@ -152,10 +189,20 @@ Value* valsym(char* s){
 
 Value* valpro(transform pro, char* proname){
   Value* ans = (Value*) malloc(sizeof(Value));
-  ans->type = VALUE_PRO;
+  ans->type = VALUE_FUNCTION;
   ans->pro = pro;
   ans->proname = (char*) malloc(strlen(proname) + 1);
   strcpy(ans->proname,proname);
+  return ans;
+}
+
+Value* valone(Value* args, Value* body){
+  Value* ans = (Value*) malloc(sizeof(Value));
+  ans->type = VALUE_FUNCTION;
+  ans->pro = NULL;
+  ans->env = genenv();
+  ans->args = args;
+  ans->body = body;
   return ans;
 }
 
@@ -214,7 +261,15 @@ void printval(Value* ans){
     case VALUE_INT: printf("%i",ans->i); break;
     case VALUE_FLOAT: printf("%f",ans->f); break;
     case VALUE_SYM: printf("%s",ans->sym); break;
-    case VALUE_PRO: printf("%s",ans->proname); break;
+    case VALUE_FUNCTION: 
+      if(!ans->pro) {
+        printf("(one "); 
+        printval(ans->args);
+        putchar(' ');
+        printval(ans->body);
+        putchar(')');
+      } else printf("%s",ans->proname); 
+      break;
     case VALUE_EXPS: printexp(ans,'(',')'); break;
     case VALUE_EXPQ: printexp(ans,'{','}'); break;
     case VALUE_ERROR: printf("Error: %s",ans->err); break;
@@ -228,7 +283,7 @@ char* printtype(VAL_TYPE t){
     case VALUE_INT: return "INT"; 
     case VALUE_FLOAT: return "FLOAT";
     case VALUE_SYM: return "SYM";
-    case VALUE_PRO: return "PRO";
+    case VALUE_FUNCTION: return "PRO";
     case VALUE_EXPS: return "EXPS";
     case VALUE_EXPQ: return "EXPQ";
     case VALUE_ERROR: return "ERROR";
@@ -237,6 +292,7 @@ char* printtype(VAL_TYPE t){
 
 char* printproname(char* sym){
   /* MAY DEPART FROM THE sym+'st' CONVENTION */
+  if(!strcmp(sym,"one")) return "onest";
   if(!strcmp(sym,"def")) return "defst";
   if(!strcmp(sym,"add")) return "addst";
   if(!strcmp(sym,"sub")) return "subst";
@@ -260,8 +316,9 @@ char* printproname(char* sym){
 
 void initenv(Env* e){
     /* INITIALIZE DEF STANDARD */
+    addstdef(e,"one",onest);
+    addstdef(e,"two",twost);
     addstdef(e,"def",defst);
-
     /* INITIALIZE MATH STANDARD */
     addstdef(e,"add",addst);
     addstdef(e,"sub",subst);
@@ -283,20 +340,63 @@ void initenv(Env* e){
     addstdef(e,"len",lenst);
 }
 
+Value* call(Env* e, Value* function, Value* arguments){
+  if(function->pro) return function->pro(e,arguments);
+  for(int i = 0; i<arguments->count; i++){
+    envput(function->env,function->args->cell[i],arguments->cell[i],NV);
+  }
+  destroyval(arguments);
+  function->env->parent = e;
+
+  Value* holder = valexps();
+  addval(holder,copy(function->body));
+  return evast(function->env,holder);
+}
+
+Value* onest(Env* e, Value* ans){
+
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'one'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ && ans->cell[1]->type == VALUE_EXPQ, "EXPQ and EXPQ Types Required 'one'. Given %s and %s.",printtype(ans->cell[0]->type),printtype(ans->cell[1]->type));
+
+  for(int i = 0; i < ans->cell[0]->count; i++){
+    VALASSERT(ans,ans->cell[0]->cell[i]->type == VALUE_SYM, "SYM Types Required within First Argument 'one'. Found %s.",printtype(ans->cell[0]->cell[i]->type));
+  }
+
+  Value* args = pop(ans,0);
+  Value* body = pop(ans,0);
+
+  destroyval(ans);
+
+  return valone(args,body);
+}
+
+Value* twost(Env* e, Value* ans){
+  return var(e,ans,"two");
+}
+
 Value* defst(Env* e, Value* ans){
+  return var(e,ans,"def");
+}
+
+Value* var(Env* e, Value* ans, char* sym){
     VALASSERT(ans, ans->cell[0]->type == VALUE_EXPQ, "EXPQ Type Required as First Argument 'def'. Given %s.",printtype(ans->cell[0]->type));
 
     Value* symlist = pop(ans,0);
-    VALASSERT(ans,ans->cell[0]->count > 0, "Empty Argument 'def.");
+    VALASSERT(ans,symlist->count > 0, "Empty Argument 'def'.");
     for(int i = 0; i < symlist->count; i++){
       VALASSERT(ans,symlist->cell[i]->type == VALUE_SYM, "SYM Types Required within First Argument 'def'. Found %s.",printtype(symlist->cell[i]->type));
     }
     VALASSERT(ans,symlist->count == ans->count, "Misaligned Definitions. Given %i SYM. Given %i Values.",symlist->count, ans->count);
     Value* empty = valexpq();
+
     for(int i = 0; i < symlist->count; i++){
-      destroyval(empty);
-      empty = envput(e,symlist->cell[i],ans->cell[i],VALNV);
-      if(empty->type == VALUE_ERROR) break;
+      if(!strcmp(sym,"def")) {
+        destroyval(empty);
+        empty = envdef(e,symlist->cell[i],ans->cell[i],NV);
+        if(empty->type == VALUE_ERROR) break;
+      } else {
+        envput(e,symlist->cell[i],ans->cell[i],NV);
+      }
     }
     destroyval(symlist);
     destroyval(ans);
