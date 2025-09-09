@@ -136,6 +136,7 @@ Env* envcopy(Env* e){
   new->count = e->count;
   new->syms = (char**) malloc(sizeof(char*) * new->count);
   new->vals = (Value**) malloc(sizeof(Value*) * new->count);
+  new->kinds = (SYM_KIND*) malloc(sizeof(SYM_KIND) * new->count);
 
   for(int i = 0; i < new->count; i++){
     new->syms[i] = malloc(strlen(e->syms[i])+1);
@@ -342,15 +343,33 @@ void initenv(Env* e){
 
 Value* call(Env* e, Value* function, Value* arguments){
   if(function->pro) return function->pro(e,arguments);
-  for(int i = 0; i<arguments->count; i++){
-    envput(function->env,function->args->cell[i],arguments->cell[i],NV);
-  }
-  destroyval(arguments);
-  function->env->parent = e;
 
-  Value* holder = valexps();
-  addval(holder,copy(function->body));
-  return evast(function->env,holder);
+  int given = arguments->count;
+  int expected = function->args->count;
+
+  while(arguments->count){
+    if(function->args->count == 0){
+      destroyval(arguments);
+      if(expected == 1) return valerr("Expected Max %i Argument. Given %i.",expected,given);
+      else return valerr("Expected Max %i Arguments. Given %i.",expected,given);
+    }
+    Value* symval = pop(function->args,0);
+    Value* x = pop(arguments,0);
+    envput(function->env,symval,x,NV);
+    destroyval(symval); destroyval(x);
+  } destroyval(arguments);
+
+
+  if(function->args->count == 0){
+    function->env->parent = e;
+
+    Value* holder = valexps();
+    addval(holder,copy(function->body));
+    return evast(function->env,holder);
+  } else {
+    return copy(function);
+  }
+
 }
 
 Value* onest(Env* e, Value* ans){
