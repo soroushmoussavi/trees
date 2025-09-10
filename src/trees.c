@@ -15,7 +15,7 @@ int main(int argc, char** argv){
       "\
         number : /-?[0-9]+/ ;\
         float : /(-?[0-9]+)(\\.[0-9]+)/ ; \
-        symbol : /[a-z]+/ ;\
+        symbol : /[a-z]+/ | ':' ;\
         exps : '(' <exp>* ')';\
         expq : '{' <exp>* '}';\
         exp : <float> | <number> | <symbol> | <exps> | <expq> ;\

@@ -350,14 +350,37 @@ Value* call(Env* e, Value* function, Value* arguments){
   while(arguments->count){
     if(function->args->count == 0){
       destroyval(arguments);
-      if(expected == 1) return valerr("Expected Max %i Argument. Given %i.",expected,given);
+      if(expected == 1) return valerr("Expected Max 1 Argument. Given %i.",expected,given);
       else return valerr("Expected Max %i Arguments. Given %i.",expected,given);
     }
     Value* symval = pop(function->args,0);
+
+    if(!strcmp(symval->sym,":")){
+      if(function->args->count != 1){
+        destroyval(arguments);
+        return valerr("One Variable Length Argument Required. Given %i.",function->args->count);
+      }
+      Value* varsym = pop(function->args,0);
+      envput(function->env,varsym,lisst(e,arguments),NV);
+      destroyval(symval); destroyval(varsym);
+      break;
+    }
     Value* x = pop(arguments,0);
     envput(function->env,symval,x,NV);
     destroyval(symval); destroyval(x);
   } destroyval(arguments);
+
+  if(function->args->count > 0 && !strcmp(function->args->cell[0]->sym,":")){
+      if(function->args->count != 2){
+        destroyval(arguments);
+        return valerr("One Variable Length Argument Required. Given %i.",function->args->count);
+      }
+      destroyval(pop(function->args,0));
+      Value* symval = pop(function->args,0);
+      Value* empty = valexpq();
+      envput(function->env,symval,empty,NV); 
+      destroyval(empty); destroyval(symval);
+  }
 
 
   if(function->args->count == 0){
@@ -431,7 +454,7 @@ Value* addst(Env* e, Value* ans){
   while(ans->count > 0){
     Value* y = pop(ans,0);
     if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
-      inttofloat(x);
+      if(x->type == VALUE_INT) inttofloat(x);
       if(y->type == VALUE_FLOAT) x->f += y->f;
       else x->f += y->i;
     } else x->i += y->i; 
@@ -455,7 +478,7 @@ Value* subst(Env* e, Value* ans){
   while(ans->count > 0){
     Value* y = pop(ans,0);
     if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
-      inttofloat(x);
+      if(x->type == VALUE_INT) inttofloat(x);
       if(y->type == VALUE_FLOAT) x->f -= y->f;
       else x->f -= y->i;
     } else x->i -= y->i; 
@@ -475,7 +498,7 @@ Value* mltst(Env* e, Value* ans){
   while(ans->count > 0){
     Value* y = pop(ans,0);
     if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
-      inttofloat(x);
+      if(x->type == VALUE_INT) inttofloat(x);
       if(y->type == VALUE_FLOAT) x->f *= y->f;
       else x->f *= y->i;
     } else x->i *= y->i; 
@@ -498,7 +521,7 @@ Value* divst(Env* e, Value* ans){
       return valerr("Division by Zero.");
     }
     if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
-      inttofloat(x);
+      if(x->type == VALUE_INT) inttofloat(x);
       if(y->type == VALUE_FLOAT) x->f /= y->f;
       else x->f /= y->i;
     } else {
@@ -523,7 +546,7 @@ Value* modst(Env* e, Value* ans){
   while(ans->count > 0){
     Value* y = pop(ans,0);
     if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
-      inttofloat(x);
+      if(x->type == VALUE_INT) inttofloat(x);
       if(y->type == VALUE_FLOAT) x->f = x->f - y->f * floor(x->f / y->f);
       else x->f = x->f - y->i * floor(x->f / y->i);
     } else x->i %= y->i; 
@@ -568,7 +591,7 @@ Value* expst(Env* e, Value* ans){
   while(ans->count > 0){
     Value* y = pop(ans,0);
     if(x->type == VALUE_FLOAT || y->type == VALUE_FLOAT) {
-      inttofloat(x);
+      if(x->type == VALUE_INT) inttofloat(x);
       if(y->type == VALUE_FLOAT) x->f = pow(x->f,y->f);
       else x->f = pow(x->f,y->i);
     } else x->i = (int) pow(x->i,y->i);
