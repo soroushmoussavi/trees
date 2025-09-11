@@ -294,6 +294,7 @@ char* printtype(VAL_TYPE t){
 char* printproname(char* sym){
   /* MAY DEPART FROM THE sym+'st' CONVENTION */
   if(!strcmp(sym,"one")) return "onest";
+  if(!strcmp(sym,"two")) return "twost";
   if(!strcmp(sym,"def")) return "defst";
   if(!strcmp(sym,"add")) return "addst";
   if(!strcmp(sym,"sub")) return "subst";
@@ -302,6 +303,13 @@ char* printproname(char* sym){
   if(!strcmp(sym,"mod")) return "modst";
   if(!strcmp(sym,"fdv")) return "fdvst";
   if(!strcmp(sym,"exp")) return "expst";
+  if(!strcmp(sym,"grt")) return "grtst";
+  if(!strcmp(sym,"gre")) return "grest";
+  if(!strcmp(sym,"lst")) return "lstst";
+  if(!strcmp(sym,"lse")) return "lsest";
+  if(!strcmp(sym,"eqt")) return "eqtst";
+  if(!strcmp(sym,"neq")) return "neqst";
+  if(!strcmp(sym,"ter")) return "terst";
   if(!strcmp(sym,"hea")) return "heast";
   if(!strcmp(sym,"ini")) return "inist";
   if(!strcmp(sym,"fin")) return "finst";
@@ -328,6 +336,14 @@ void initenv(Env* e){
     addstdef(e,"mod",modst);
     addstdef(e,"fdv",fdvst);
     addstdef(e,"exp",expst);
+    /* INITIALIZE TER STANDARD */
+    addstdef(e,"grt",grtst);
+    addstdef(e,"gre",grest);
+    addstdef(e,"lst",lstst);
+    addstdef(e,"lse",lsest);
+    //addstdef(e,"eqt",eqtst);
+    //addstdef(e,"neq",neqst);
+    //addstdef(e,"ter",terst);    
     /* INITIALIZE Q STANDARD */
     addstdef(e,"hea",heast);
     addstdef(e,"ini",inist);
@@ -600,6 +616,60 @@ Value* expst(Env* e, Value* ans){
 
   return x;
 }
+
+Value* grtst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
+  
+  int res;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_FLOAT) res = ans->cell[0]->f > ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->f > (float) ans->cell[1]->i;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_FLOAT) res = (float) ans->cell[0]->i > ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->i > ans->cell[1]->i;
+  destroyval(ans);
+  return valint(res);
+}
+
+Value* grest(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
+  
+  int res;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_FLOAT) res = ans->cell[0]->f >= ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->f >= (float) ans->cell[1]->i;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_FLOAT) res = (float) ans->cell[0]->i >= ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->i >= ans->cell[1]->i;
+  destroyval(ans);
+  return valint(res);
+}
+
+
+Value* lstst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
+  
+  int res;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_FLOAT) res = ans->cell[0]->f < ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->f < (float) ans->cell[1]->i;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_FLOAT) res = (float) ans->cell[0]->i < ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->i < ans->cell[1]->i;
+  destroyval(ans);
+  return valint(res);
+}
+
+Value* lsest(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
+  
+  int res;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_FLOAT) res = ans->cell[0]->f <= ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->f <= (float) ans->cell[1]->i;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_FLOAT) res = (float) ans->cell[0]->i <= ans->cell[1]->f;
+  if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->i <= ans->cell[1]->i;
+  destroyval(ans);
+  return valint(res);
+}
+
 
 Value* heast(Env* e, Value* ans){
   VALASSERT(ans, ans->count == 1, "One Argument Required 'hea'. Given %i.", ans->count);

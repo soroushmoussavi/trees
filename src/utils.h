@@ -47,6 +47,14 @@ Value* modst(Env*,Value*);
 Value* fdvst(Env*,Value*);
 Value* expst(Env*,Value*);
 
+Value* grtst(Env*,Value*);
+Value* grest(Env*,Value*);
+Value* lstst(Env*,Value*);
+Value* lsest(Env*,Value*);
+Value* eqtst(Env*,Value*);
+Value* neqst(Env*,Value*);
+Value* terst(Env*,Value*);
+
 Value* heast(Env*,Value*);
 Value* inist(Env*,Value*);
 Value* finst(Env*,Value*);
