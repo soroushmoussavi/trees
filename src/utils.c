@@ -341,8 +341,8 @@ void initenv(Env* e){
     addstdef(e,"gre",grest);
     addstdef(e,"lst",lstst);
     addstdef(e,"lse",lsest);
-    //addstdef(e,"eqt",eqtst);
-    //addstdef(e,"neq",neqst);
+    addstdef(e,"eqt",eqtst);
+    addstdef(e,"neq",neqst);
     //addstdef(e,"ter",terst);    
     /* INITIALIZE Q STANDARD */
     addstdef(e,"hea",heast);
@@ -631,7 +631,7 @@ Value* grtst(Env* e, Value* ans){
 }
 
 Value* grest(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'gre'. Given %i.", ans->count);
   for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
   
   int res;
@@ -645,7 +645,7 @@ Value* grest(Env* e, Value* ans){
 
 
 Value* lstst(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'lat'. Given %i.", ans->count);
   for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
   
   int res;
@@ -658,7 +658,7 @@ Value* lstst(Env* e, Value* ans){
 }
 
 Value* lsest(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'grt'. Given %i.", ans->count);
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'lse'. Given %i.", ans->count);
   for(int i = 0; i < 2; i++) VALASSERT(ans,ans->cell[i]->type == VALUE_INT || ans->cell[i]->type == VALUE_FLOAT, "Non-numeric Inclusion 'grt'. Found %s.",printtype(ans->cell[i]->type));
   
   int res;
@@ -670,6 +670,57 @@ Value* lsest(Env* e, Value* ans){
   return valint(res);
 }
 
+Value* eqtst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'eqtst'. Given %i.", ans->count);
+  int res;
+  if((ans->cell[0]->type == VALUE_FLOAT || ans->cell[0]->type == VALUE_INT) && (ans->cell[1]->type == VALUE_FLOAT || ans->cell[1]->type == VALUE_INT)){
+    if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_FLOAT) res = ans->cell[0]->f == ans->cell[1]->f;
+    if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->f == (float) ans->cell[1]->i;
+    if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_FLOAT) res = (float) ans->cell[0]->i == ans->cell[1]->f;
+    if(ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_INT) res = ans->cell[0]->i == ans->cell[1]->i;
+    destroyval(ans); return valint(res);
+  }
+
+  if(ans->cell[0]->type != ans->cell[1]->type) {destroyval(ans); return valint(0);}
+  switch(ans->cell[0]->type){
+    case VALUE_SYM: res = !strcmp(ans->cell[0]->sym,ans->cell[1]->sym); break;
+    case VALUE_FUNCTION:
+      if(ans->cell[0]->pro || ans->cell[1]->pro) res = ans->cell[0]->pro == ans->cell[1]->pro;
+      else{
+        Value* bothargs = valexps(); addval(bothargs,copy(ans->cell[0]->args)); addval(bothargs,copy(ans->cell[1]->args));
+        Value* bothbody = valexps(); addval(bothbody,copy(ans->cell[0]->body)); addval(bothbody,copy(ans->cell[1]->body));
+        bothargs = eqtst(e,bothargs); bothbody = eqtst(e,bothbody);
+        res = bothargs->i * bothbody->i; 
+        destroyval(bothargs); destroyval(bothbody);
+      }
+      break;
+    case VALUE_EXPS:
+    case VALUE_EXPQ:
+      if(ans->cell[0]->count != ans->cell[1]->count) {res = 0; break;}
+      res = 1;
+      int n = ans->cell[0]->count;
+      for(int i = 0; i < n; i++){
+        Value* both = valexps(); addval(both,pop(ans->cell[0],0)); addval(both,pop(ans->cell[1],0));
+        both = eqtst(e,both);
+        res *= both->i; 
+        destroyval(both);
+        if(!res) break;
+      }
+      break;
+    case VALUE_ERROR: res = !strcmp(ans->cell[0]->err,ans->cell[1]->err); break;
+    default: 
+      res = 0;
+      break;
+  }
+  destroyval(ans);
+  return valint(res);
+}
+
+Value* neqst(Env* e, Value* ans){
+  Value* res = eqtst(e,ans);
+  res->i = !res->i;
+  return res;
+}
 
 Value* heast(Env* e, Value* ans){
   VALASSERT(ans, ans->count == 1, "One Argument Required 'hea'. Given %i.", ans->count);
