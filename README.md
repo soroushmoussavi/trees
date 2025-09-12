@@ -23,5 +23,5 @@ trees : square 5
 trees : 
 ```
 ## Status
-Complete with a parser combinator supplied with [mpc](https://github.com/orangeduck/mpc), a low-level evaluation engine, and a robust error-handling scheme, <i> trees </i> now completely supports lambda definition, variable setting, and all arithmetic. There are six conditional, one ternary and ten list-manipulation symbols. 
+Complete with a parser combinator supplied with [mpc](https://github.com/orangeduck/mpc), a low-level evaluation engine, and a robust error-handling scheme, <i> trees </i> now completely supports lambda definition, variable setting, and all arithmetic. There are three logical, six conditional, one ternary and ten list-manipulation symbols. 
  

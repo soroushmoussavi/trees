@@ -303,6 +303,9 @@ char* printproname(char* sym){
   if(!strcmp(sym,"mod")) return "modst";
   if(!strcmp(sym,"fdv")) return "fdvst";
   if(!strcmp(sym,"exp")) return "expst";
+  if(!strcmp(sym,"dsj")) return "dsjst";
+  if(!strcmp(sym,"cnj")) return "cnjst";
+  if(!strcmp(sym,"neg")) return "negst";
   if(!strcmp(sym,"grt")) return "grtst";
   if(!strcmp(sym,"gre")) return "grest";
   if(!strcmp(sym,"lst")) return "lstst";
@@ -336,6 +339,10 @@ void initenv(Env* e){
     addstdef(e,"mod",modst);
     addstdef(e,"fdv",fdvst);
     addstdef(e,"exp",expst);
+    /* INITIALIZE LOGICAL STANDARD */
+    addstdef(e,"dsj",dsjst);
+    addstdef(e,"cnj",cnjst);
+    addstdef(e,"neg",negst);
     /* INITIALIZE TER STANDARD */
     addstdef(e,"grt",grtst);
     addstdef(e,"gre",grest);
@@ -615,6 +622,34 @@ Value* expst(Env* e, Value* ans){
   }
 
   return x;
+}
+
+Value* dsjst(Env* e, Value* ans){
+  int res = 0;
+  for(int i = 0; i < 2; i++){
+    VALASSERT(ans,ans->cell[i]->type == VALUE_INT, "Non-INT Inclusion 'dsj'. Found %s.",printtype(ans->cell[i]->type));
+    if(ans->cell[i]->i) { res = 1; break; }
+  }
+  destroyval(ans);
+  return valint(res);
+}
+
+Value* cnjst(Env* e, Value* ans){
+  int res = 1;
+  for(int i = 0; i < 2; i++){
+    VALASSERT(ans,ans->cell[i]->type == VALUE_INT, "Non-INT Inclusion 'dsj'. Found %s.",printtype(ans->cell[i]->type));
+    if(!ans->cell[i]->i) { res = 0; break; }
+  }
+  destroyval(ans);
+  return valint(res);
+}
+
+Value* negst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 1, "One Argument Required 'neg'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_INT, "INT Type Required 'neg'. Given %s.",printtype(ans->cell[0]->type));
+  int res = !ans->cell[0]->i;
+  destroyval(ans);
+  return valint(res);
 }
 
 Value* grtst(Env* e, Value* ans){
