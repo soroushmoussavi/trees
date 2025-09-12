@@ -343,7 +343,7 @@ void initenv(Env* e){
     addstdef(e,"lse",lsest);
     addstdef(e,"eqt",eqtst);
     addstdef(e,"neq",neqst);
-    //addstdef(e,"ter",terst);    
+    addstdef(e,"ter",terst);    
     /* INITIALIZE Q STANDARD */
     addstdef(e,"hea",heast);
     addstdef(e,"ini",inist);
@@ -671,7 +671,7 @@ Value* lsest(Env* e, Value* ans){
 }
 
 Value* eqtst(Env* e, Value* ans){
-  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'eqtst'. Given %i.", ans->count);
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'eqt'. Given %i.", ans->count);
   int res;
   if((ans->cell[0]->type == VALUE_FLOAT || ans->cell[0]->type == VALUE_INT) && (ans->cell[1]->type == VALUE_FLOAT || ans->cell[1]->type == VALUE_INT)){
     if(ans->cell[0]->type == VALUE_FLOAT && ans->cell[1]->type == VALUE_FLOAT) res = ans->cell[0]->f == ans->cell[1]->f;
@@ -717,8 +717,24 @@ Value* eqtst(Env* e, Value* ans){
 }
 
 Value* neqst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 2, "Two Arguments Required 'neq'. Given %i.", ans->count);
   Value* res = eqtst(e,ans);
   res->i = !res->i;
+  return res;
+}
+
+Value* terst(Env* e, Value* ans){
+  VALASSERT(ans, ans->count == 3, "Three Arguments Required 'ter'. Given %i.", ans->count);
+  VALASSERT(ans, ans->cell[0]->type == VALUE_INT && ans->cell[1]->type == VALUE_EXPQ && ans->cell[2]->type == VALUE_EXPQ, "INT, EXPQ and EXPQ Types Required 'ter'. Given %s, %s and %s.",printtype(ans->cell[0]->type),printtype(ans->cell[1]->type),printtype(ans->cell[2]->type));
+
+  Value* res;
+  ans->cell[1]->type = VALUE_EXPS;
+  ans->cell[2]->type = VALUE_EXPS;
+
+  if(ans->cell[0]->i) res = eval(e,pop(ans,1));
+  else res = eval(e,pop(ans,2));
+
+  destroyval(ans);
   return res;
 }
 

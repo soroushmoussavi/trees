@@ -26,7 +26,7 @@ int main(int argc, char** argv){
   Env* e = genenv();
   initenv(e);
 
-  puts("\nTREES 0.0.0.0.1");
+  puts("\nTREES 0.8");
   puts("Press Ctrl+C to Exit\n");
 
   while(1){
