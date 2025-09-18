@@ -14,7 +14,7 @@
 #include <editline/history.h>
 #endif
 
-typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_SYM, VALUE_FUNCTION, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
+typedef enum {VALUE_INT, VALUE_FLOAT, VALUE_STRING, VALUE_SYM, VALUE_FUNCTION, VALUE_EXPS, VALUE_EXPQ, VALUE_ERROR} VAL_TYPE;
 typedef enum {ST, NV} SYM_KIND;
 
 typedef struct Value Value;
@@ -27,6 +27,7 @@ struct Value{
     union {
         int i;
         double f;
+        char* str;
         char* sym;
         struct{
             transform pro;
@@ -54,6 +55,7 @@ struct Env{
 Value* read(mpc_ast_t*);
 Value* readint(mpc_ast_t*);
 Value* readfloat(mpc_ast_t*);
+Value* readstr(mpc_ast_t*);
 
 Value* eval(Env*,Value*);
 Value* evalexps(Env*,Value*);

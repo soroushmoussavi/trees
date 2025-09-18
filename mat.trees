@@ -1,0 +1,21 @@
+def {sum} (one {li} {
+    ter (eqt li {}) 
+        {0} 
+        {add (eva (hea li)) (sum (tai li)) } 
+})
+
+def {retrieve} (one {li i} {
+    ter (eqt i 0)
+        {eva (hea li)}
+        {retrieve (tai li) (sub i 1)}
+})
+
+def {within} (one {li x} {
+    ter (eqt li {}) 
+        {eqt x (eva li)}
+        {dsj 
+            (eqt x (eva (hea li))) 
+            (within (tai li) x) 
+        }
+})
+

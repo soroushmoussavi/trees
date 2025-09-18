@@ -72,6 +72,7 @@ Value* lenst(Env*,Value*);
 
 Value* valint(int);
 Value* valfloat(double);
+Value* valstr(char*);
 Value* valsym(char*);
 Value* valpro(transform,char*);
 Value* valexps();

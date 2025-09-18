@@ -24,6 +24,10 @@ Value* copy(Value* ans){
   switch(res->type){
     case VALUE_INT: res->i = ans->i; break;
     case VALUE_FLOAT: res->f = ans->f; break;
+    case VALUE_STRING:
+      res->str = (char*) malloc(strlen(ans->str)+1);
+      strcpy(res->str,ans->str);
+      break;
     case VALUE_SYM: 
       res->sym = (char*) malloc(strlen(ans->sym)+1);
       strcpy(res->sym,ans->sym);
@@ -67,6 +71,7 @@ void destroyval(Value* ans){
   switch(ans->type){
     case VALUE_INT: break;
     case VALUE_FLOAT: break;
+    case VALUE_STRING: free(ans->str); break;
     case VALUE_SYM: free(ans->sym); break;
     case VALUE_FUNCTION: 
       if(!ans->pro){
@@ -180,6 +185,14 @@ Value* valfloat(double f){
   return ans;
 }
 
+Value* valstr(char* s){
+  Value* ans = (Value*) malloc(sizeof(Value));
+  ans->type = VALUE_STRING;
+  ans->str = malloc(strlen(s)+1);
+  strcpy(ans->str,s);
+  return ans;
+}
+
 Value* valsym(char* s){
   Value* ans = (Value*) malloc(sizeof(Value));
   ans->type = VALUE_SYM;
@@ -261,6 +274,15 @@ void printval(Value* ans){
   switch(ans->type){
     case VALUE_INT: printf("%i",ans->i); break;
     case VALUE_FLOAT: printf("%f",ans->f); break;
+    case VALUE_STRING: 
+      {
+        char* escaped = (char*) malloc(strlen(ans->str)+1);
+        strcpy(escaped,ans->str);
+        escaped = mpcf_escape(escaped);
+        printf("\"%s\"", escaped);
+        free(escaped);
+        break; 
+      }
     case VALUE_SYM: printf("%s",ans->sym); break;
     case VALUE_FUNCTION: 
       if(!ans->pro) {
@@ -283,8 +305,9 @@ char* printtype(VAL_TYPE t){
   switch(t){
     case VALUE_INT: return "INT"; 
     case VALUE_FLOAT: return "FLOAT";
+    case VALUE_STRING: return "STRING";
     case VALUE_SYM: return "SYM";
-    case VALUE_FUNCTION: return "PRO";
+    case VALUE_FUNCTION: return "FUNCTION";
     case VALUE_EXPS: return "EXPS";
     case VALUE_EXPQ: return "EXPQ";
     case VALUE_ERROR: return "ERROR";
@@ -719,6 +742,7 @@ Value* eqtst(Env* e, Value* ans){
   if(ans->cell[0]->type != ans->cell[1]->type) {destroyval(ans); return valint(0);}
   switch(ans->cell[0]->type){
     case VALUE_SYM: res = !strcmp(ans->cell[0]->sym,ans->cell[1]->sym); break;
+    case VALUE_STRING: res = !strcmp(ans->cell[0]->sym,ans->cell[1]->sym); break;
     case VALUE_FUNCTION:
       if(ans->cell[0]->pro || ans->cell[1]->pro) res = ans->cell[0]->pro == ans->cell[1]->pro;
       else{

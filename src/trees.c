@@ -5,6 +5,8 @@ int main(int argc, char** argv){
 
   mpc_parser_t* Number = mpc_new("number");
   mpc_parser_t* Float = mpc_new("float");
+  mpc_parser_t* String = mpc_new("string");
+  mpc_parser_t* Comment = mpc_new("comment");
   mpc_parser_t* Symbol = mpc_new("symbol");
   mpc_parser_t* ExpS = mpc_new("exps");
   mpc_parser_t* ExpQ = mpc_new("expq");
@@ -14,23 +16,24 @@ int main(int argc, char** argv){
   mpca_lang(MPCA_LANG_DEFAULT,
       "\
         number : /-?[0-9]+/ ;\
-        float : /(-?[0-9]+)(\\.[0-9]+)/ ; \
+        float : /(-?[0-9]+)(\\.[0-9]+)/ ;\
+        string  : /\"(\\\\.|[^\"])*\"/ ;\
+        comment : /#[^\\r\\n]*/ ;\
         symbol : /[a-z]+/ | ':' ;\
         exps : '(' <exp>* ')';\
         expq : '{' <exp>* '}';\
-        exp : <float> | <number> | <symbol> | <exps> | <expq> ;\
+        exp : <float> | <number> | <string> | <comment> | <symbol> | <exps> | <expq>;\
         trees : /^/ <exp>* /$/ ;a\
       ",
-    Number, Float, Symbol, ExpS, ExpQ, Exp, Trees);
+    Number, Float, String, Comment, Symbol, ExpS, ExpQ, Exp, Trees);
 
   Env* e = genenv();
   initenv(e);
 
   puts("\nTREES 0.8");
-  puts("Press Ctrl+C to Exit\n");
+  puts("Ctrl+C to Exit \n");
 
   while(1){
-    
       char* input = readline("trees : ");
       add_history(input);
 
@@ -50,8 +53,8 @@ int main(int argc, char** argv){
       
       free(input);
   }
-
-  mpc_cleanup(7, Float, Number, Symbol, ExpS, ExpQ, Exp, Trees);
+  
+  mpc_cleanup(9, Float, Number, String, Comment, Symbol, ExpS, ExpQ, Exp, Trees);
   destroyenv(e);
 
   return 0;
@@ -61,6 +64,8 @@ Value* read(mpc_ast_t* t){
 
   if(strstr(t->tag, "number")) return readint(t); 
   if(strstr(t->tag, "float")) return readfloat(t); 
+  if(strstr(t->tag, "string")) return readstr(t); 
+
   if(strstr(t->tag, "symbol")) return valsym(t->contents);
    
   Value* ans = NULL;
@@ -73,9 +78,11 @@ Value* read(mpc_ast_t* t){
       !strcmp(t->children[i]->contents,"(") ||
       !strcmp(t->children[i]->contents,")") || 
       !strcmp(t->children[i]->tag,"regex")  ||
+      strstr(t->children[i]->tag, "comment") ||
       !strcmp(t->children[i]->contents,"{") ||
       !strcmp(t->children[i]->contents,"}") 
     ) continue;
+
     addval(ans,read(t->children[i]));
   }
 
@@ -128,6 +135,17 @@ Value* readfloat(mpc_ast_t* t){
   errno = 0;
   double f = strtod(t->contents,NULL);
   return (errno == ERANGE) ? valerr("Float Exceeding.") : valfloat(f);
+}
+
+Value* readstr(mpc_ast_t* t){
+  t->contents[strlen(t->contents)-1] = '\0';
+  char* unescaped = (char*) malloc(sizeof(t->contents+1)+1);
+  strcpy(unescaped,t->contents+1);
+  unescaped = mpcf_unescape(unescaped);
+  
+  Value* stringval = valstr(unescaped);
+  free(unescaped);
+  return stringval;
 }
 
 
