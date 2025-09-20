@@ -34,8 +34,9 @@ void initenv(Env*);
 Value* call(Env*,Value*,Value*);
 
 Value* onest(Env*,Value*);
-Value* twost(Env*,Value*);
+
 Value* defst(Env*,Value*);
+Value* decst(Env*,Value*);
 
 Value* var(Env*,Value*,char*);
 
@@ -70,13 +71,17 @@ Value* prpst(Env*,Value*);
 Value* appst(Env*,Value*);
 Value* lenst(Env*,Value*);
 
+Value* errst(Env*,Value*);
+
 Value* valint(int);
 Value* valfloat(double);
 Value* valstr(char*);
+Value* valref(char*);
 Value* valsym(char*);
 Value* valpro(transform,char*);
 Value* valexps();
 Value* valexpq();
-Value* valerr(char*, ...);
+Value* valerr(char*,...);
+Value* valnil();
 
 #endif
